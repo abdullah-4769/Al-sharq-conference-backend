@@ -1,0 +1,159 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  password     String
+  name         String
+  phone        String?
+  file         String?   
+  role         String?   @default("participant") 
+  organization String?
+  photo        String?
+  speakers  Speaker[]
+  representatives Representative[]
+  exhibitorsRepresented    ExhibitorRepresentative[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Event {
+  id           Int       @id @default(autoincrement())
+  title        String
+  description  String
+  startTime    DateTime
+  endTime      DateTime
+  location     String
+  sponsor_Ids   Int[]    
+  exhibitor_Ids Int[]   
+  joinToken     String?   @unique  
+  status       String     @default("draft") 
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Sponsor {
+  id              Int              @id @default(autoincrement())
+  name            String
+  Pic_url         String?
+  description     String?
+  website         String?
+  email           String?
+  phone           String?
+  linkedin        String?
+  twitter         String?
+  youtube         String?
+  products        Product[]         // no onDelete here
+  representatives Representative[]  // no onDelete here
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Product {
+  id          Int       @id @default(autoincrement())
+  sponsorId   Int
+  title       String
+  description String?
+  sponsor     Sponsor   @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Representative {
+  id           Int       @id @default(autoincrement())
+  sponsorId    Int
+  userId       Int
+  displayTitle String?
+  sponsor      Sponsor   @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Exhibitor {
+  id              Int              @id @default(autoincrement())
+  name            String
+  picUrl          String?          
+  description     String?
+  location        String?
+  website         String?
+  email           String?
+  phone           String?
+  linkedin        String?
+  twitter         String?
+  youtube         String?
+  products        ExhibitorProduct[]
+  representatives ExhibitorRepresentative[]
+  booths          Booth[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model ExhibitorProduct {
+  id           Int        @id @default(autoincrement())
+  exhibitorId  Int
+  title        String
+  description  String?
+  exhibitor    Exhibitor  @relation(fields: [exhibitorId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model ExhibitorRepresentative {
+  id            Int        @id @default(autoincrement())
+  exhibitorId   Int
+  userId        Int
+  displayTitle  String?
+  exhibitor     Exhibitor  @relation(fields: [exhibitorId], references: [id], onDelete: Cascade)
+  user          User       @relation(fields: [userId], references: [id])
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Booth {
+  id            Int        @id @default(autoincrement())
+  exhibitorId   Int
+  boothNumber   String
+  boothLocation String
+  mapLink       String?    // store Google Maps or any map link
+  distance      Float?
+  openTime      String?
+  exhibitor     Exhibitor  @relation(fields: [exhibitorId], references: [id], onDelete: Cascade)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+
+
+model Speaker {
+  id           Int       @id @default(autoincrement())
+  userId       Int       @unique
+  user         User      @relation(fields: [userId], references: [id])
+  designations String[] 
+  bio          String?
+  expertise    String[]
+  tags         String[]
+  category     String?
+  country      String?
+  website      String?
+  youtube     String?
+  facebook     String?
+  linkedin     String?
+  twitter      String?
+   sessionIds   Int[] 
+  featured     Boolean   @default(false)
+  verified     Boolean   @default(false)
+  priority     Int?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  isActive     Boolean   @default(true)
+}
+

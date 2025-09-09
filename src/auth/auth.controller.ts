@@ -1,0 +1,46 @@
+import {
+  Controller,
+  Post,
+  Body,
+  UseInterceptors,
+  UploadedFiles,
+} from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { AuthService } from './auth.service';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  // Register endpoint
+  @Post('register')
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'photo', maxCount: 1 },
+        { name: 'file', maxCount: 1 },
+      ],
+      {
+        dest: './uploads', // Multer upload folder
+      },
+    ),
+  )
+  async register(
+    @Body() data: RegisterDto,
+    @UploadedFiles()
+    files: { photo?: Express.Multer.File[]; file?: Express.Multer.File[] },
+  ) {
+    const photo = files.photo?.[0];
+    const file = files.file?.[0];
+
+    return this.authService.register(data, { photo, file });
+  }
+
+  // Login endpoint
+  @Post('login')
+  async login(@Body() data: LoginDto) {
+    return this.authService.login(data);
+  }
+}
