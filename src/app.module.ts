@@ -12,6 +12,12 @@ import { ExhibitorProductsModule } from './exhibitor/product-exhibtor/exhibitor-
 import { ExhibitorRepresentativeModule } from './exhibitor/exhibitor-representative/exhibitor-representative.module';
 import { BoothModule } from './exhibitor/booth/booth.module';
 import { SpeakerModule } from './speaker/speaker.module';
+import { SessionModule } from './session/session.module';
+import { ParticipantsModule } from './user/agenda-mark-participants/participants.module';
+import { EventRegistrationModule } from './user/event-registration-varification/event-registration.module';
+import { ParticipantDirectoryModule } from './networking/ParticipantDirectory-opt-in-out/participant-directory.module';
+import { ConnectionModule } from './networking/connection/connection.module';
+import { ChatModule } from './networking/chat/chat.module';
 
 
 @Module({
@@ -25,7 +31,13 @@ import { SpeakerModule } from './speaker/speaker.module';
     RepresentativeModule,
     ExhibitorRepresentativeModule,
     BoothModule,
-    SpeakerModule
+    SpeakerModule,
+    SessionModule,
+    ParticipantsModule,
+    EventRegistrationModule,
+    ParticipantDirectoryModule,
+    ConnectionModule,
+    ChatModule
   ],
   controllers: [AppController],
   providers: [AppService],

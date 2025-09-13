@@ -19,8 +19,15 @@ model User {
   organization String?
   photo        String?
   speakers  Speaker[]
+  eventJoins EventJoin[]
   representatives Representative[]
+  participants Participant[] 
+  participantDirectories ParticipantDirectory[]  
   exhibitorsRepresented    ExhibitorRepresentative[]
+  sentRequests     ConnectionRequest[] @relation("SentRequests")
+  receivedRequests ConnectionRequest[] @relation("ReceivedRequests")
+  sentMessages    ChatMessage[]   @relation("SentMessages")
+  receivedMessages ChatMessage[]  @relation("ReceivedMessages")
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
@@ -32,12 +39,18 @@ model Event {
   startTime    DateTime
   endTime      DateTime
   location     String
-  sponsor_Ids   Int[]    
-  exhibitor_Ids Int[]   
+  
+  sessions    Session[]
+  participants Participant[]
   joinToken     String?   @unique  
   status       String     @default("draft") 
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  registrations EventRegistration[]
+  eventJoins   EventJoin[]
+  participantDirectories ParticipantDirectory[]
+  sponsors    Sponsor[]   @relation("EventSponsors")
+  exhibitors  Exhibitor[] @relation("EventExhibitors")
 }
 
 model Sponsor {
@@ -55,6 +68,7 @@ model Sponsor {
   representatives Representative[]  // no onDelete here
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  events    Event[] @relation("EventSponsors")
 }
 
 model Product {
@@ -95,6 +109,7 @@ model Exhibitor {
   booths          Booth[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  events    Event[] @relation("EventExhibitors")
 }
 
 model ExhibitorProduct {
@@ -148,7 +163,8 @@ model Speaker {
   facebook     String?
   linkedin     String?
   twitter      String?
-   sessionIds   Int[] 
+  sessions     Session[]  @relation("SessionSpeakers")
+ 
   featured     Boolean   @default(false)
   verified     Boolean   @default(false)
   priority     Int?
@@ -157,3 +173,115 @@ model Speaker {
   isActive     Boolean   @default(true)
 }
 
+
+
+
+model Session {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  location    String?
+  category    String?      // e.g. "Workshop", "Panel", "Keynote"
+  capacity    Int?         // max seats for the session
+  tags        String[]     // simple array of tags
+
+  speakers    Speaker[]    @relation("SessionSpeakers")
+  event       Event        @relation(fields: [eventId], references: [id])
+  eventId     Int
+  participants Participant[] @relation("ParticipantSessions")
+
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+
+model Participant {
+  id        Int       @id @default(autoincrement())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+  event     Event     @relation(fields: [eventId], references: [id])
+  eventId   Int
+  sessions  Session[] @relation("ParticipantSessions")
+
+  createdAt DateTime  @default(now())
+}
+
+
+
+model EventRegistration {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  name      String
+  email     String   @unique
+  event     Event    @relation(fields: [eventId], references: [id])
+  eventId   Int
+  joinCode  String   @unique       // frontend friendly 6-character code
+  token     String                  // stores actual event join token
+  createdAt DateTime @default(now())
+}
+
+
+model EventJoin {
+  id        Int      @id @default(autoincrement())
+  event     Event    @relation(fields: [eventId], references: [id])
+  eventId   Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  joinedAt  DateTime @default(now())
+
+  @@unique([eventId, userId]) // prevent multiple joins for same user in same event
+}
+
+
+
+model ParticipantDirectory {
+  id       Int    @id @default(autoincrement())
+  participant User  @relation(fields: [userId], references: [id])
+  userId   Int
+  event    Event  @relation(fields: [eventId], references: [id])
+  eventId  Int
+  optedIn  Boolean @default(false) 
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId]) // one record per participant per event
+}
+
+
+
+model ConnectionRequest {
+  id          Int      @id @default(autoincrement())
+  sender      User     @relation("SentRequests", fields: [senderId], references: [id])
+  senderId    Int
+  receiver    User     @relation("ReceivedRequests", fields: [receiverId], references: [id])
+  receiverId  Int
+  status      ConnectionStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([senderId, receiverId]) // prevent duplicate requests
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+
+
+model ChatMessage {
+  id          Int      @id @default(autoincrement())
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  senderId    Int
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  receiverId  Int
+  content     String
+  createdAt   DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+}
