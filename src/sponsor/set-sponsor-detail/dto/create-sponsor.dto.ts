@@ -1,5 +1,6 @@
 export class CreateSponsorDto {
   name: string;
+  category?: string;  
   pic_url?: string;
   description?: string;
   website?: string;

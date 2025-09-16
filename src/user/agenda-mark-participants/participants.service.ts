@@ -51,9 +51,9 @@ async addToAgenda(userId: number, sessionId: number, eventId: number) {
       where: { userId },
       include: {
         event: {
-          include: { sessions: true }, // include all sessions for the event
+          include: { sessions: true }, 
         },
-        sessions: true, // participant's sessions
+        sessions: true, 
       },
     });
 
@@ -61,20 +61,20 @@ async addToAgenda(userId: number, sessionId: number, eventId: number) {
       throw new NotFoundException('No participant found for this user');
     }
 
-    // Group sessions under each event
+
     const result = participants.map((p) => ({
       eventId: p.eventId,
-      eventTitle: p.event.title, // use title instead of name
+      eventTitle: p.event.title, 
       sessions: p.event.sessions.map((s) => ({
         sessionId: s.id,
-        sessionTitle: s.title, // use title instead of name
+        sessionTitle: s.title, 
       })),
     }));
 
     return result;
   }
 
-  // 2. Get all participants by eventId
+
 async getByEventId(eventId: number) {
   const participants = await this.prisma.participant.findMany({
     where: { eventId },
@@ -151,5 +151,55 @@ async getBySessionId(sessionId: number) {
   };
 }
 
+
+  async getRemainingSessions(userId: number) {
+    const userParticipant = await this.prisma.participant.findMany({
+      where: { userId },
+      include: { sessions: true },
+    });
+
+    const addedSessionIds = new Set<number>();
+    userParticipant.forEach((p) => {
+      p.sessions.forEach((s) => addedSessionIds.add(s.id));
+    });
+
+    const remainingSessions = await this.prisma.session.findMany({
+      where: {
+        id: { notIn: Array.from(addedSessionIds) },
+        isActive: true,
+      },
+      include: {
+        event: true,
+        speakers: {
+          include: { user: true },
+        },
+      },
+    });
+
+    if (!remainingSessions.length) {
+      throw new NotFoundException({ status: 404, message: 'No sessions found' });
+    }
+
+    return remainingSessions.map((s) => ({
+      sessionId: s.id,
+      sessionTitle: s.title,
+      sessionDescription: s.description || null,
+      category: s.category || null,
+      duration: `${s.startTime.toISOString()} - ${s.endTime.toISOString()}`,
+      location: s.location || null,
+      speakers: s.speakers.map((sp) => ({
+        speakerId: sp.id,
+        fullName: sp.user ? sp.user.name : null,
+        bio: sp.bio || null,
+      })),
+      event: s.event
+        ? {
+            eventId: s.event.id,
+            eventTitle: s.event.title,
+            eventDescription: s.event.description,
+          }
+        : null,
+    }));
+  }
 
 }

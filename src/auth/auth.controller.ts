@@ -15,28 +15,26 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   // Register endpoint
-  @Post('register')
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'photo', maxCount: 1 },
-        { name: 'file', maxCount: 1 },
-      ],
-      {
-        dest: './uploads', // Multer upload folder
-      },
-    ),
-  )
-  async register(
-    @Body() data: RegisterDto,
-    @UploadedFiles()
-    files: { photo?: Express.Multer.File[]; file?: Express.Multer.File[] },
-  ) {
-    const photo = files.photo?.[0];
-    const file = files.file?.[0];
+@Post('register')
+@UseInterceptors(
+  FileFieldsInterceptor(
+    [
+      { name: 'photo', maxCount: 1 },
+      { name: 'file', maxCount: 1 },
+    ],
+    { dest: './uploads' },
+  ),
+)
+async register(
+  @Body() data: RegisterDto,
+  @UploadedFiles() files?: { photo?: Express.Multer.File[]; file?: Express.Multer.File[] },
+) {
+  const photo = files?.photo?.[0] // will be undefined if not present
+  const file = files?.file?.[0]   // will be undefined if not present
 
-    return this.authService.register(data, { photo, file });
-  }
+  return this.authService.register(data, { photo, file })
+}
+
 
   // Login endpoint
   @Post('login')

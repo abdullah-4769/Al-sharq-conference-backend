@@ -5,10 +5,10 @@ import { UpdateSessionDto } from './dto/update-session.dto';
 
 @Injectable()
 export class SessionService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(data: CreateSessionDto) {
-    // check if event exists
+
     const event = await this.prisma.event.findUnique({
       where: { id: data.eventId },
     });
@@ -16,7 +16,7 @@ export class SessionService {
       throw new NotFoundException(`Event with id ${data.eventId} not found`);
     }
 
-    // check speakers
+
     if (data.speakerIds && data.speakerIds.length > 0) {
       const speakers = await this.prisma.speaker.findMany({
         where: { id: { in: data.speakerIds } },
@@ -89,7 +89,7 @@ export class SessionService {
       throw new NotFoundException(`Session with id ${id} not found`);
     }
 
-    // validate speakers if provided
+
     if (data.speakerIds && data.speakerIds.length > 0) {
       const speakers = await this.prisma.speaker.findMany({
         where: { id: { in: data.speakerIds } },
@@ -112,8 +112,8 @@ export class SessionService {
         endTime: data.endTime ? new Date(data.endTime) : undefined,
         speakers: data.speakerIds
           ? {
-              set: data.speakerIds.map((id) => ({ id })), // replace old with new
-            }
+            set: data.speakerIds.map((id) => ({ id })), // replace old with new
+          }
           : undefined,
       },
       include: {

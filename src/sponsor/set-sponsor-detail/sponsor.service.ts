@@ -24,12 +24,12 @@ export class SponsorService {
   }
 
   async updateSponsor(id: number, data: UpdateSponsorDto) {
-    await this.getSponsorById(id); // Check if exists
+    await this.getSponsorById(id); 
     return this.prisma.sponsor.update({ where: { id }, data });
   }
 
   async deleteSponsor(id: number) {
-    await this.getSponsorById(id); // Check if exists
+    await this.getSponsorById(id); 
     return this.prisma.sponsor.delete({ where: { id } });
   }
 
@@ -68,6 +68,7 @@ async getSponsorWithDetails(id: number) {
   return {
     id: sponsor.id,
     name: sponsor.name,
+    
     pic_url: sponsor.Pic_url,
     description: sponsor.description,
     createdAt: sponsor.createdAt,

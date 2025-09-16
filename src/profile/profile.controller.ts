@@ -15,7 +15,7 @@ export class ProfileController {
     return this.profileService.getProfile(userId);
   }
 
-  // Update own profile
+
   @Patch('me')
   async updateMyProfile(
     @GetUser('id') userId: number,

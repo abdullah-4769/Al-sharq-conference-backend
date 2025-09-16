@@ -48,7 +48,7 @@ async create(createEventDto: CreateEventDto) {
     include: { sponsors: true, exhibitors: true },
   });
 
-  // Step 4: Return updated event with token
+  
   return updatedEvent;
 }
 
@@ -71,7 +71,7 @@ async create(createEventDto: CreateEventDto) {
   async update(id: number, updateEventDto: UpdateEventDto) {
     await this.findOne(id);
 
-    // Map relations for update
+
     const sponsorConnect = updateEventDto.sponsors?.map(s => ({ id: s.id })) || [];
     const exhibitorConnect = updateEventDto.exhibitors?.map(e => ({ id: e.id })) || [];
 
@@ -106,4 +106,47 @@ async create(createEventDto: CreateEventDto) {
       return { ...event, totalTimeInMinutes };
     });
   }
+
+    async findAllWithDetails() {
+    const events = await this.prisma.event.findMany({
+      include: {
+        sponsors: true,
+        exhibitors: true,
+        sessions: true, 
+      },
+    });
+
+    return events.map(event => {
+      const start = new Date(event.startTime);
+      const end = new Date(event.endTime);
+      const totalTimeInMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+
+      return { ...event, totalTimeInMinutes };
+    });
+  }
+
+ async findAllShortInfo() {
+    const events = await this.prisma.event.findMany();
+
+    return events.map(event => {
+      const start = new Date(event.startTime);
+      const end = new Date(event.endTime);
+      const totalTimeInMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+
+      return {
+        eventId: event.id,
+        title: event.title,
+        description: event.description,
+        startTime: event.startTime,
+        endTime: event.endTime,
+        location: event.location,
+        status: event.status,
+        createdAt: event.createdAt,
+        updatedAt: event.updatedAt,
+        totalTimeInMinutes,
+      };
+    });
+  }
+
+
 }

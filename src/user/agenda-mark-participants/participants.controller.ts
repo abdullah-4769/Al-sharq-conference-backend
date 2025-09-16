@@ -30,4 +30,12 @@ export class ParticipantsController {
   getBySessionId(@Param('sessionId', ParseIntPipe) sessionId: number) {
     return this.participantsService.getBySessionId(sessionId);
   }
+
+  @Get('remaining-sessions/:userId')
+  async getRemainingSessions(@Param('userId', ParseIntPipe) userId: number) {
+    return this.participantsService.getRemainingSessions(userId)
+  }
+  
+
+
 }

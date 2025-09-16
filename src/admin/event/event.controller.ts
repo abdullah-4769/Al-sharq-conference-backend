@@ -3,24 +3,37 @@ import { EventService } from './event.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 
-@Controller('admin/event')
+@Controller('event')
 export class EventController {
-  constructor(private readonly eventService: EventService) {}
+  constructor(private readonly eventService: EventService) { }
 
-@Post()
-create(@Body() createEventDto: CreateEventDto) {
-  return this.eventService.create(createEventDto);
+  @Post()
+  create(@Body() createEventDto: CreateEventDto) {
+    return this.eventService.create(createEventDto);
+  }
+
+@Get('with-details')
+async findAllWithDetails() {
+  return this.eventService.findAllWithDetails()
 }
 
 
-  @Get()
+  @Get('admin-all')
   findAll() {
     return this.eventService.findAll();
   }
-@Get('published')
-findPublished() {
-  return this.eventService.findPublished();
-}
+
+
+@Get('short-info')
+  async findAllShortInfo() {
+    return this.eventService.findAllShortInfo();
+  }
+
+  @Get('published')
+  findPublished() {
+    return this.eventService.findPublished();
+  }
+
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
@@ -36,6 +49,9 @@ findPublished() {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.eventService.remove(id);
   }
+
+
+
 
 
 }
