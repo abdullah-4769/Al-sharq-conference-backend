@@ -1,39 +1,31 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../lib/prisma/prisma.service';
-import { CreateSessionDto } from './dto/create-session.dto';
-import { UpdateSessionDto } from './dto/update-session.dto';
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { PrismaService } from '../lib/prisma/prisma.service'
+import { CreateSessionDto } from './dto/create-session.dto'
+import { UpdateSessionDto } from './dto/update-session.dto'
+import { JwtService } from '../lib/jwt/jwt.service'
 
 @Injectable()
 export class SessionService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
   async create(data: CreateSessionDto) {
+    const event = await this.prisma.event.findUnique({ where: { id: data.eventId } })
+    if (!event) throw new NotFoundException(`Event with id ${data.eventId} not found`)
 
-    const event = await this.prisma.event.findUnique({
-      where: { id: data.eventId },
-    });
-    if (!event) {
-      throw new NotFoundException(`Event with id ${data.eventId} not found`);
-    }
-
-
-    if (data.speakerIds && data.speakerIds.length > 0) {
+    if (data.speakerIds?.length) {
       const speakers = await this.prisma.speaker.findMany({
         where: { id: { in: data.speakerIds } },
         select: { id: true },
-      });
-
-      const foundIds = speakers.map((s) => s.id);
-      const missing = data.speakerIds.filter((id) => !foundIds.includes(id));
-
-      if (missing.length > 0) {
-        throw new NotFoundException(
-          `Speakers not found: ${missing.join(', ')}`,
-        );
-      }
+      })
+      const foundIds = speakers.map(s => s.id)
+      const missing = data.speakerIds.filter(id => !foundIds.includes(id))
+      if (missing.length) throw new NotFoundException(`Speakers not found: ${missing.join(', ')}`)
     }
 
-    return this.prisma.session.create({
+    const session = await this.prisma.session.create({
       data: {
         title: data.title,
         description: data.description,
@@ -45,15 +37,31 @@ export class SessionService {
         tags: data.tags,
         eventId: data.eventId,
         isActive: data.isActive ?? true,
-        speakers: data.speakerIds
-          ? { connect: data.speakerIds.map((id) => ({ id })) }
-          : undefined,
+        registrationRequired: data.registrationRequired ?? false,
+        speakers: data.speakerIds ? { connect: data.speakerIds.map(id => ({ id })) } : undefined,
       },
       include: {
         speakers: { include: { user: true } },
         event: true,
       },
-    });
+    })
+
+    const now = Date.now()
+    const end = new Date(session.endTime).getTime()
+    const expiresInSeconds = Math.max(Math.floor((end - now) / 1000), 0)
+
+    const token = this.jwtService.sign({ sessionId: session.id }, { expiresIn: expiresInSeconds })
+
+    const updatedSession = await this.prisma.session.update({
+      where: { id: session.id },
+      data: { joinToken: token },
+      include: {
+        speakers: { include: { user: true } },
+        event: true,
+      },
+    })
+
+    return updatedSession
   }
 
   async findAll() {
@@ -63,7 +71,7 @@ export class SessionService {
         event: true,
         participants: { include: { user: true } },
       },
-    });
+    })
   }
 
   async findOne(id: number) {
@@ -74,34 +82,23 @@ export class SessionService {
         event: true,
         participants: { include: { user: true } },
       },
-    });
-
-    if (!session) {
-      throw new NotFoundException(`Session with id ${id} not found`);
-    }
-
-    return session;
+    })
+    if (!session) throw new NotFoundException(`Session with id ${id} not found`)
+    return session
   }
 
   async update(id: number, data: UpdateSessionDto) {
-    const session = await this.prisma.session.findUnique({ where: { id } });
-    if (!session) {
-      throw new NotFoundException(`Session with id ${id} not found`);
-    }
+    const session = await this.prisma.session.findUnique({ where: { id } })
+    if (!session) throw new NotFoundException(`Session with id ${id} not found`)
 
-
-    if (data.speakerIds && data.speakerIds.length > 0) {
+    if (data.speakerIds?.length) {
       const speakers = await this.prisma.speaker.findMany({
         where: { id: { in: data.speakerIds } },
         select: { id: true },
-      });
-      const foundIds = speakers.map((s) => s.id);
-      const missing = data.speakerIds.filter((id) => !foundIds.includes(id));
-      if (missing.length > 0) {
-        throw new NotFoundException(
-          `Speakers not found: ${missing.join(', ')}`,
-        );
-      }
+      })
+      const foundIds = speakers.map(s => s.id)
+      const missing = data.speakerIds.filter(id => !foundIds.includes(id))
+      if (missing.length) throw new NotFoundException(`Speakers not found: ${missing.join(', ')}`)
     }
 
     return this.prisma.session.update({
@@ -110,27 +107,22 @@ export class SessionService {
         ...data,
         startTime: data.startTime ? new Date(data.startTime) : undefined,
         endTime: data.endTime ? new Date(data.endTime) : undefined,
-        speakers: data.speakerIds
-          ? {
-            set: data.speakerIds.map((id) => ({ id })), // replace old with new
-          }
-          : undefined,
+        registrationRequired: data.registrationRequired ?? session.registrationRequired,
+        speakers: data.speakerIds ? { set: data.speakerIds.map(id => ({ id })) } : undefined,
       },
       include: {
         speakers: { include: { user: true } },
         event: true,
         participants: { include: { user: true } },
       },
-    });
+    })
   }
 
   async remove(id: number) {
-    const session = await this.prisma.session.findUnique({ where: { id } });
-    if (!session) {
-      throw new NotFoundException(`Session with id ${id} not found`);
-    }
+    const session = await this.prisma.session.findUnique({ where: { id } })
+    if (!session) throw new NotFoundException(`Session with id ${id} not found`)
 
-    await this.prisma.session.delete({ where: { id } });
-    return { message: 'Session deleted successfully' };
+    await this.prisma.session.delete({ where: { id } })
+    return { message: 'Session deleted successfully' }
   }
 }

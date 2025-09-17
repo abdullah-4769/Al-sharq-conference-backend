@@ -6,47 +6,51 @@ import {
   IsDateString,
   IsBoolean,
   ArrayNotEmpty,
-} from 'class-validator';
+} from 'class-validator'
 
 export class CreateSessionDto {
   @IsString()
-  title: string;
+  title: string
 
   @IsOptional()
   @IsString()
-  description?: string;
+  description?: string
 
   @IsDateString()
-  startTime: string;
+  startTime: string
 
   @IsDateString()
-  endTime: string;
+  endTime: string
 
   @IsOptional()
   @IsString()
-  location?: string;
+  location?: string
 
   @IsOptional()
   @IsString()
-  category?: string;
+  category?: string
 
   @IsOptional()
   @IsInt()
-  capacity?: number;
+  capacity?: number
 
   @IsOptional()
   @IsArray()
-  tags?: string[];
+  tags?: string[]
 
   @IsInt()
-  eventId: number;
+  eventId: number
 
   @IsOptional()
   @IsArray()
   @ArrayNotEmpty()
-  speakerIds?: number[];
+  speakerIds?: number[]
 
   @IsOptional()
   @IsBoolean()
-  isActive?: boolean;
+  isActive?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  registrationRequired?: boolean
 }

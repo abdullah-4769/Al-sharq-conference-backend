@@ -28,6 +28,8 @@ model User {
   receivedRequests ConnectionRequest[] @relation("ReceivedRequests")
   sentMessages    ChatMessage[]   @relation("SentMessages")
   receivedMessages ChatMessage[]  @relation("ReceivedMessages")
+  sessionRegistrations SessionRegistration[]
+  sessionJoins       SessionJoin[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
@@ -48,6 +50,8 @@ model Event {
   updatedAt    DateTime   @updatedAt
   registrations EventRegistration[]
   eventJoins   EventJoin[]
+
+  sessionRegistrations SessionRegistration[]
   participantDirectories ParticipantDirectory[]
   sponsors    Sponsor[]   @relation("EventSponsors")
   exhibitors  Exhibitor[] @relation("EventExhibitors")
@@ -192,7 +196,11 @@ model Session {
   event       Event        @relation(fields: [eventId], references: [id])
   eventId     Int
   participants Participant[] @relation("ParticipantSessions")
-
+  joinToken            String?      // token for joining session
+  registrationRequired Boolean      @default(false) // new field
+  sessionRegistrations SessionRegistration[]
+  sessionJoins         SessionJoin[]
+  participantDirectories ParticipantDirectory[]
   isActive    Boolean      @default(true)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -239,17 +247,18 @@ model EventJoin {
 
 
 model ParticipantDirectory {
-  id       Int    @id @default(autoincrement())
-  participant User  @relation(fields: [userId], references: [id])
-  userId   Int
-  event    Event  @relation(fields: [eventId], references: [id])
-  eventId  Int
-  optedIn  Boolean @default(false) 
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  event     Event?   @relation(fields: [eventId], references: [id])
+  eventId   Int?
+  session   Session? @relation(fields: [sessionId], references: [id])
+  sessionId Int?
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  optedIn   Boolean  @default(false)
 
-  @@unique([userId, eventId]) // one record per participant per event
+  @@unique([userId, eventId, sessionId])
 }
+
 
 
 
@@ -285,4 +294,35 @@ model ChatMessage {
 
   @@index([senderId])
   @@index([receiverId])
+}
+
+
+model SessionRegistration {
+  id                 Int      @id @default(autoincrement())
+  user               User     @relation(fields: [userId], references: [id])
+  userId             Int
+  event              Event?   @relation(fields: [eventId], references: [id])
+  eventId            Int?
+  session            Session  @relation(fields: [sessionId], references: [id])
+  sessionId          Int
+  name               String?
+  organization       String?
+  email              String?
+  whyWantToJoin      String?
+  relevantExperience String?
+  joinCode           String   @unique
+  token              String
+  createdAt          DateTime @default(now())
+}
+
+
+model SessionJoin {
+  id        Int      @id @default(autoincrement())
+  session   Session  @relation(fields: [sessionId], references: [id])
+  sessionId Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  joinedAt  DateTime @default(now())
+
+  @@unique([sessionId, userId])
 }

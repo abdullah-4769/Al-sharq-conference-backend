@@ -18,7 +18,7 @@ import { EventRegistrationModule } from './user/event-registration-varification/
 import { ParticipantDirectoryModule } from './networking/ParticipantDirectory-opt-in-out/participant-directory.module';
 import { ConnectionModule } from './networking/connection/connection.module';
 import { ChatModule } from './networking/chat/chat.module';
-
+import { ParticipantsSessionModule } from './user/participants-session/participants-session.module'
 
 @Module({
   imports: [AuthModule,
@@ -37,7 +37,8 @@ import { ChatModule } from './networking/chat/chat.module';
     EventRegistrationModule,
     ParticipantDirectoryModule,
     ConnectionModule,
-    ChatModule
+    ChatModule,
+    ParticipantsSessionModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,5 +1,7 @@
 export class CreateParticipantDirectoryDto {
-  userId: number;
-  eventId: number;
-  optedIn?: boolean;
+  userId: number
+  eventId?: number
+  sessionId?: number
+  optedIn?: boolean
 }
+

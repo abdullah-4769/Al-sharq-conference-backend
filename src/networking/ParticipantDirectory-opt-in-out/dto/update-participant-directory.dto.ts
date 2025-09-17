@@ -1,3 +1,3 @@
 export class UpdateParticipantDirectoryDto {
-  optedIn: boolean;
+  optedIn: boolean
 }
