@@ -157,6 +157,8 @@ export class ParticipantsService {
           speakerId: sp.id,
           fullName: sp.user?.name || null,
           bio: sp.bio || null,
+         pic: sp.user?.file || null
+
         })),
         event: s.event
           ? {
