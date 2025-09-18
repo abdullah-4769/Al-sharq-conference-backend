@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete ,ParseIntPipe} from '@nestjs/common';
 import { SessionService } from './session.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
@@ -17,7 +17,7 @@ export class SessionController {y
     return this.sessionService.findAll();
   }
 
-  @Get(':id')
+  @Get('detail/:id')
   findOne(@Param('id') id: string) {
     return this.sessionService.findOne(Number(id));
   }
@@ -31,4 +31,11 @@ export class SessionController {y
   remove(@Param('id') id: string) {
     return this.sessionService.remove(Number(id));
   }
+
+  @Get(':id/related-sessions')
+  async getRelatedSessionsSimple(@Param('id', ParseIntPipe) id: number) {
+    return this.sessionService.findRelatedSessionsSimple(id)
+  }
+
+
 }

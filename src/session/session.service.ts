@@ -74,18 +74,29 @@ export class SessionService {
     })
   }
 
-  async findOne(id: number) {
-    const session = await this.prisma.session.findUnique({
-      where: { id },
-      include: {
-        speakers: { include: { user: true } },
-        event: true,
-        participants: { include: { user: true } },
-      },
-    })
-    if (!session) throw new NotFoundException(`Session with id ${id} not found`)
-    return session
+async findOne(id: number) {
+  const session = await this.prisma.session.findUnique({
+    where: { id },
+    include: {
+      speakers: { include: { user: true } },
+      event: true,
+      sessionRegistrations: { include: { user: true } },
+    },
+  })
+  if (!session) throw new NotFoundException(`Session with id ${id} not found`)
+
+  const registeredUsers = session.sessionRegistrations.map(reg => reg.user)
+  const registrationCount = registeredUsers.length
+
+  const { sessionRegistrations, ...sessionData } = session
+
+  return {
+    ...sessionData,
+    registeredUsers,
+    registrationCount,
   }
+}
+
 
   async update(id: number, data: UpdateSessionDto) {
     const session = await this.prisma.session.findUnique({ where: { id } })
@@ -125,4 +136,46 @@ export class SessionService {
     await this.prisma.session.delete({ where: { id } })
     return { message: 'Session deleted successfully' }
   }
+
+async findRelatedSessionsSimple(sessionId: number) {
+  const session = await this.prisma.session.findUnique({
+    where: { id: sessionId },
+  })
+  if (!session) throw new NotFoundException(`Session with id ${sessionId} not found`)
+
+  const relatedSessions = await this.prisma.session.findMany({
+    where: {
+      eventId: session.eventId,
+      NOT: { id: sessionId },
+    },
+    include: {
+      speakers: {
+        include: {
+          user: {
+            select: { name: true, file: true } // include file
+          }
+        }
+      }
+    },
+  })
+
+  return relatedSessions.map(s => ({
+    id: s.id,
+    eventId: s.eventId, // added eventId
+    title: s.title,
+    description: s.description,
+    startTime: s.startTime,
+    endTime: s.endTime,
+    location: s.location,
+    category: s.category,
+    capacity: s.capacity,
+    speakers: s.speakers.map(sp => ({
+      name: sp.user.name,
+      photo: sp.user.file // map file to photo
+    }))
+  }))
+}
+
+
+
 }

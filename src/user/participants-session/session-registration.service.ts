@@ -208,4 +208,39 @@ async getAllRegistrations() {
     const json = Buffer.from(payload, 'base64').toString('utf8')
     return JSON.parse(json)
   }
+
+async getSessionsByUser(userId: number) {
+  const registrations = await this.prisma.sessionRegistration.findMany({
+    where: { userId },
+    include: {
+      session: {
+        include: { event: true }, // include event info for each session
+      },
+    },
+  })
+
+  const sessions = registrations.map(reg => ({
+    sessionId: reg.session.id,
+    title: reg.session.title,
+    description: reg.session.description,
+    startTime: reg.session.startTime,
+    endTime: reg.session.endTime,
+    location: reg.session.location,
+    category: reg.session.category,
+    isActive: reg.session.isActive,
+    joinCode: reg.joinCode,
+    event: reg.session.event
+      ? {
+          eventId: reg.session.event.id,
+          title: reg.session.event.title,
+          description: reg.session.event.description,
+        }
+      : null,
+  }))
+
+  return { count: sessions.length, sessions }
+}
+
+
+
 }

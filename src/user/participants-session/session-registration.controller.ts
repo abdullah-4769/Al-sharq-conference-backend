@@ -36,4 +36,12 @@ export class SessionRegistrationController {
   async getJoinedParticipantsBySession(@Param('sessionId', ParseIntPipe) sessionId: number) {
     return this.service.getJoinedParticipantsBySession(sessionId)
   }
+
+  @Get('/:userId/registered-sessions')
+async getUserSessions(@Param('userId', ParseIntPipe) userId: number) {
+  return this.service.getSessionsByUser(userId)
+}
+
+
+
 }
