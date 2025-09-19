@@ -68,4 +68,43 @@ export class SpeakerService {
     await this.prisma.speaker.delete({ where: { id } });
     return { message: 'Speaker deleted successfully' };
   }
+
+async findSpeakersByEvent(eventId: number) {
+    const speakers = await this.prisma.speaker.findMany({
+      where: {
+        sessions: {
+          some: { eventId },
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            file: true,
+          },
+        },
+        sessions: {
+          where: { eventId },
+          select: { id: true, title: true },
+        },
+      },
+    });
+
+    return speakers.map((speaker) => ({
+      id: speaker.id,
+      bio: speaker.bio,
+      designations: speaker.designations,
+      expertise: speaker.expertise,
+      tags: speaker.tags,
+      sessionCount: speaker.sessions.length,
+      sessions: speaker.sessions.map((s) => ({ id: s.id, title: s.title })),
+      user: speaker.user ? speaker.user : null, // show user only if exists
+    }));
+  }
+
+
+
 }

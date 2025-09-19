@@ -30,4 +30,11 @@ export class SpeakerController {
   remove(@Param('id') id: string) {
     return this.speakerService.remove(Number(id));
   }
+
+ @Get('event/:eventId/short-info')
+  findSpeakersByEvent(@Param('eventId') eventId: string) {
+    return this.speakerService.findSpeakersByEvent(Number(eventId));
+  }
+
+
 }
