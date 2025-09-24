@@ -49,6 +49,11 @@ async findAllWithDetails() {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.eventService.remove(id);
   }
+  // controller
+@Get('event-sessions/:eventId')
+async getEventSessions(@Param('eventId', ParseIntPipe) eventId: number) {
+  return this.eventService.getAllEventSessions(eventId)
+}
 
 
 

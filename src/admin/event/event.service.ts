@@ -148,5 +148,59 @@ async create(createEventDto: CreateEventDto) {
     });
   }
 
+// service
+async getAllEventSessions(eventId: number) {
+  const nowMs = Date.now()
+
+  const allSessions = await this.prisma.session.findMany({
+    where: { eventId, isActive: true },
+    include: { event: true, speakers: { include: { user: true } } },
+    orderBy: { startTime: 'asc' },
+  })
+
+  const sessions = allSessions.map((s) => {
+    const startMs = s.startTime.getTime()
+    const endMs = s.endTime.getTime()
+    const isLive = startMs <= nowMs && endMs >= nowMs
+
+    let timeToStart: number | null = null
+    if (startMs > nowMs) {
+      timeToStart = Math.ceil((startMs - nowMs) / (1000 * 60))
+    }
+
+    return {
+      sessionId: s.id,
+      sessionTitle: s.title,
+      sessionDescription: s.description || null,
+      category: s.category || null,
+      duration: `${s.startTime.toISOString()} - ${s.endTime.toISOString()}`,
+      location: s.location || null,
+      registrationRequired: s.registrationRequired ?? false,
+      isLive,
+      timeToStart,
+      speakers: s.speakers.map((sp) => ({
+        speakerId: sp.id,
+        fullName: sp.user?.name || null,
+        bio: sp.bio || null,
+        pic: sp.user?.file || null,
+      })),
+      event: s.event
+        ? {
+            eventId: s.event.id,
+            eventTitle: s.event.title,
+            eventDescription: s.event.description,
+          }
+        : null,
+    }
+  })
+
+  return {
+    liveSessions: sessions.filter((s) => s.isLive),
+    allSessions: sessions,
+  }
+}
+
+
+
 
 }
