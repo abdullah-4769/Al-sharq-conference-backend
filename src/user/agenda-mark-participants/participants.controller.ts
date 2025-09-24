@@ -5,7 +5,7 @@ import { ParticipantsService } from './participants.service';
 export class ParticipantsController {
   constructor(private participantsService: ParticipantsService) {}
 
-  @Post('agenda')
+ @Post('agenda')
   async addToAgenda(
     @Body() body: { userId: number; sessionId: number; eventId: number },
   ) {
