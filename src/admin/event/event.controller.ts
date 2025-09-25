@@ -40,11 +40,10 @@ async findAllWithDetails() {
     return this.eventService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateEventDto: UpdateEventDto) {
-    return this.eventService.update(id, updateEventDto);
-  }
-
+@Patch(':id')
+update(@Param('id', ParseIntPipe) id: number, @Body() updateEventDto: UpdateEventDto) {
+  return this.eventService.update(id, updateEventDto);
+}
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.eventService.remove(id);
@@ -56,7 +55,10 @@ async getEventSessions(@Param('eventId', ParseIntPipe) eventId: number) {
 }
 
 
-
+ @Get('eventsrelatedsponsers/:eventId')
+  async fetchByEvent(@Param('eventId', ParseIntPipe) eventId: number) {
+    return this.eventService.getSponsorsAndExhibitorsByEvent(eventId);
+  }
 
 
 }

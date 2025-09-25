@@ -68,25 +68,24 @@ async create(createEventDto: CreateEventDto) {
     return event;
   }
 
-  async update(id: number, updateEventDto: UpdateEventDto) {
-    await this.findOne(id);
+async update(id: number, updateEventDto: UpdateEventDto) {
+  await this.findOne(id);
 
+  const sponsorConnect = updateEventDto.sponsors?.map(s => ({ id: s })) || [];
+  const exhibitorConnect = updateEventDto.exhibitors?.map(e => ({ id: e })) || [];
 
-    const sponsorConnect = updateEventDto.sponsors?.map(s => ({ id: s.id })) || [];
-    const exhibitorConnect = updateEventDto.exhibitors?.map(e => ({ id: e.id })) || [];
+  const data: any = {
+    ...updateEventDto,
+    sponsors: sponsorConnect.length ? { set: sponsorConnect } : undefined,
+    exhibitors: exhibitorConnect.length ? { set: exhibitorConnect } : undefined,
+  };
 
-    const data: any = {
-      ...updateEventDto,
-      sponsors: sponsorConnect.length ? { set: sponsorConnect } : undefined,
-      exhibitors: exhibitorConnect.length ? { set: exhibitorConnect } : undefined,
-    };
-
-    return this.prisma.event.update({
-      where: { id },
-      data,
-      include: { sponsors: true, exhibitors: true },
-    });
-  }
+  return this.prisma.event.update({
+    where: { id },
+    data,
+    include: { sponsors: true, exhibitors: true },
+  });
+}
 
   async remove(id: number) {
     await this.findOne(id);
@@ -200,7 +199,44 @@ async getAllEventSessions(eventId: number) {
   }
 }
 
+ async getSponsorsAndExhibitorsByEvent(eventId: number) {
+    // Sponsors related to this event
+    const sponsors = await this.prisma.sponsor.findMany({
+      where: {
+        events: {
+          some: {
+            id: eventId
+          }
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        category: true
+      }
+    });
 
+    // Exhibitors related to this event
+    const exhibitors = await this.prisma.exhibitor.findMany({
+      where: {
+        events: {
+          some: {
+            id: eventId
+          }
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        location: true
+      }
+    });
 
-
+    return {
+      sponsors,
+      exhibitors
+    };
+  }
 }
