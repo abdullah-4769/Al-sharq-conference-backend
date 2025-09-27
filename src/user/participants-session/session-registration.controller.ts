@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, ParseIntPipe } from '@nestjs/common'
+import { Controller, Post, Body, Get, Param, Query,ParseIntPipe } from '@nestjs/common'
 import { SessionRegistrationService } from './session-registration.service'
 import { CreateSessionRegistrationDto } from './dto/create-session-registration.dto'
 import { VerifyJoinCodeDto } from './dto/verify-join-code.dto'
@@ -37,9 +37,12 @@ export class SessionRegistrationController {
     return this.service.getJoinedParticipantsBySession(sessionId)
   }
 
-  @Get('/:userId/registered-sessions')
-async getUserSessions(@Param('userId', ParseIntPipe) userId: number) {
-  return this.service.getSessionsByUser(userId)
+@Get('/:userId/registered-sessions')
+async getUserSessions(
+  @Param('userId', ParseIntPipe) userId: number,
+  @Query('eventId') eventId?: string // optional query param
+) {
+  return this.service.getSessionsByUser(userId, eventId ? parseInt(eventId) : undefined)
 }
 
 

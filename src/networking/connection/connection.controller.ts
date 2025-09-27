@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, ParseIntPipe, Patch, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, Param, ParseIntPipe,Delete, Patch, Get, Query } from '@nestjs/common';
 import { ConnectionService } from './connection.service';
 import { SendConnectionRequestDto, UpdateConnectionStatusDto } from './dto/connection.dto';
 
@@ -39,6 +39,18 @@ async getAllConnections(@Query('userId', ParseIntPipe) userId: number) {
 }
 
 
+ @Get('pending')
+  async getPendingRequests(@Query('userId', ParseIntPipe) userId: number) {
+    return this.service.getPendingRequests(userId);
+  }
 
 
+   @Delete('clear')
+  async deleteAllRequests() {
+    return this.service.deleteAllRequests();
+  }
+
+
+
+  
 }
