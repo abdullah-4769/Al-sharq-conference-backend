@@ -37,4 +37,11 @@ async findOneWithDetails(@Param('id', ParseIntPipe) id: number) {
     return this.service.deleteExhibitor(Number(id));
   }
 
+
+@Get(':id/sessions')
+async getSessionsByExhibitor(@Param('id', ParseIntPipe) id: number) {
+  return this.service.findSessionsByExhibitor(id)
+}
+
+
 }

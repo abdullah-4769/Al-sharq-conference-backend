@@ -98,36 +98,42 @@ async findOne(id: number) {
 }
 
 
-  async update(id: number, data: UpdateSessionDto) {
-    const session = await this.prisma.session.findUnique({ where: { id } })
-    if (!session) throw new NotFoundException(`Session with id ${id} not found`)
+async update(id: number, data: UpdateSessionDto) {
+  const session = await this.prisma.session.findUnique({ where: { id } })
+  if (!session) throw new NotFoundException(`Session with id ${id} not found`)
 
-    if (data.speakerIds?.length) {
-      const speakers = await this.prisma.speaker.findMany({
-        where: { id: { in: data.speakerIds } },
-        select: { id: true },
-      })
-      const foundIds = speakers.map(s => s.id)
-      const missing = data.speakerIds.filter(id => !foundIds.includes(id))
-      if (missing.length) throw new NotFoundException(`Speakers not found: ${missing.join(', ')}`)
-    }
-
-    return this.prisma.session.update({
-      where: { id },
-      data: {
-        ...data,
-        startTime: data.startTime ? new Date(data.startTime) : undefined,
-        endTime: data.endTime ? new Date(data.endTime) : undefined,
-        registrationRequired: data.registrationRequired ?? session.registrationRequired,
-        speakers: data.speakerIds ? { set: data.speakerIds.map(id => ({ id })) } : undefined,
-      },
-      include: {
-        speakers: { include: { user: true } },
-        event: true,
-        participants: { include: { user: true } },
-      },
+  if (data.speakerIds?.length) {
+    const speakers = await this.prisma.speaker.findMany({
+      where: { id: { in: data.speakerIds } },
+      select: { id: true },
     })
+    const foundIds = speakers.map(s => s.id)
+    const missing = data.speakerIds.filter(id => !foundIds.includes(id))
+    if (missing.length) throw new NotFoundException(`Speakers not found: ${missing.join(', ')}`)
   }
+
+  // Remove eventId from data and handle it separately for Prisma
+  const { eventId, speakerIds, ...restData } = data
+
+  return this.prisma.session.update({
+    where: { id },
+    data: {
+      ...restData,
+      startTime: data.startTime ? new Date(data.startTime) : undefined,
+      endTime: data.endTime ? new Date(data.endTime) : undefined,
+      registrationRequired: data.registrationRequired ?? session.registrationRequired,
+      // Use Prisma relation format for event
+      event: eventId ? { connect: { id: eventId } } : undefined,
+      // Use Prisma relation format for speakers
+      speakers: speakerIds ? { set: speakerIds.map(id => ({ id })) } : undefined,
+    },
+    include: {
+      speakers: { include: { user: true } },
+      event: true,
+      participants: { include: { user: true } },
+    },
+  })
+}
 
   async remove(id: number) {
     const session = await this.prisma.session.findUnique({ where: { id } })
@@ -137,31 +143,23 @@ async findOne(id: number) {
     return { message: 'Session deleted successfully' }
   }
 
-async findRelatedSessionsSimple(sessionId: number) {
-  const session = await this.prisma.session.findUnique({
-    where: { id: sessionId },
-  })
-  if (!session) throw new NotFoundException(`Session with id ${sessionId} not found`)
-
-  const relatedSessions = await this.prisma.session.findMany({
-    where: {
-      eventId: session.eventId,
-      NOT: { id: sessionId },
-    },
+async findRelatedSessionsByEvent(eventId: number) {
+  const sessions = await this.prisma.session.findMany({
+    where: { eventId },
     include: {
       speakers: {
         include: {
           user: {
-            select: { name: true, file: true } // include file
+            select: { name: true, file: true } 
           }
         }
       }
-    },
+    }
   })
 
-  return relatedSessions.map(s => ({
+  return sessions.map(s => ({
     id: s.id,
-    eventId: s.eventId, // added eventId
+    eventId: s.eventId,
     title: s.title,
     description: s.description,
     startTime: s.startTime,
@@ -171,10 +169,114 @@ async findRelatedSessionsSimple(sessionId: number) {
     capacity: s.capacity,
     speakers: s.speakers.map(sp => ({
       name: sp.user.name,
-      photo: sp.user.file // map file to photo
+      file: sp.user.file
     }))
   }))
 }
+
+
+
+async findSessionsBySpeaker(speakerId: number) {
+  const now = new Date()
+
+  const sessions = await this.prisma.session.findMany({
+    where: {
+      speakers: {
+        some: { id: speakerId }
+      }
+    },
+    include: {
+      speakers: {
+        include: {
+          user: {
+            select: {
+              name: true,
+              file: true
+            }
+          }
+        }
+      }
+    }
+  })
+
+  const total = sessions.length
+  const ongoing = sessions.filter(s => new Date(s.startTime) <= now && new Date(s.endTime) >= now).length
+  const scheduled = sessions.filter(s => new Date(s.startTime) > now).length
+
+  const formattedSessions = sessions.map(session => ({
+    ...session,
+    speakers: session.speakers.map(sp => sp.user)
+  }))
+
+  return {
+    total,
+    ongoing,
+    scheduled,
+    sessions: formattedSessions
+  }
+}
+
+ async findAllSessions() {
+    const sessions = await this.prisma.session.findMany({
+      include: {
+        speakers: {
+          include: {
+            user: {
+              select: { name: true, file: true }
+            }
+          }
+        }
+      }
+    })
+
+    return sessions.map(s => ({
+      id: s.id,
+      eventId: s.eventId,
+      title: s.title,
+      description: s.description,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      location: s.location,
+      category: s.category,
+      capacity: s.capacity,
+      joinToken : s.joinToken,
+      registrationRequired: s.registrationRequired,
+      speakers: s.speakers.map(sp => ({
+        name: sp.user.name,
+        file: sp.user.file
+      }))
+    }))
+  }
+
+async findSessionById(id: number) {
+  const session = await this.prisma.session.findUnique({
+    where: { id },
+    include: {
+      speakers: {
+        include: {
+          user: {
+            select: { name: true, file: true }
+          }
+        }
+      }
+    }
+  })
+
+  if (!session) throw new NotFoundException(`Session with id ${id} not found`)
+
+  const formattedSpeakers = session.speakers.map(sp => ({
+    id: sp.id,          // include speaker id
+    name: sp.user.name,
+    file: sp.user.file
+  }))
+
+  return {
+    ...session,
+    speakers: formattedSpeakers
+  }
+}
+
+
 
 
 

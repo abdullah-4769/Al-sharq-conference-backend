@@ -1,19 +1,27 @@
-import { IsOptional, IsString, IsEmail } from 'class-validator';
+import { IsOptional, IsString, IsEmail } from 'class-validator'
 
 export class UpdateProfileDto {
   @IsOptional()
   @IsString()
-  name?: string;
+  name?: string
 
   @IsOptional()
   @IsEmail()
-  email?: string;
+  email?: string
 
   @IsOptional()
   @IsString()
-  phone?: string;
+  phone?: string
 
   @IsOptional()
   @IsString()
-  organization?: string;
+  organization?: string
+
+  @IsOptional()
+  @IsString()
+  photo?: string
+
+  @IsOptional()
+  @IsString()
+  file?: string
 }

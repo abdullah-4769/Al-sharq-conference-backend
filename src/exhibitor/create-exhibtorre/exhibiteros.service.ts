@@ -36,9 +36,9 @@ export class ExhibiterosService {
     return this.prisma.exhibitor.findUnique({
       where: { id },
       include: {
-        products: true,
-        representatives: true,
-        booths: true,
+        products: false,
+        representatives: false,
+        booths: false,
       },
     });
   }
@@ -125,6 +125,42 @@ async getExhibitorWithDetails(id: number) {
   };
 }
 
+async findSessionsByExhibitor(exhibitorId: number) {
+  const now = new Date()
+
+  const sessions = await this.prisma.session.findMany({
+    where: {
+      event: {
+        exhibitors: {
+          some: { id: exhibitorId }
+        }
+      }
+    },
+    include: {
+      speakers: {
+        include: {
+          user: {
+            select: {
+              name: true,
+              file: true
+            }
+          }
+        }
+      }
+    }
+  })
+
+  const total = sessions.length
+  const ongoing = sessions.filter(s => s.startTime <= now && s.endTime >= now).length
+  const scheduled = sessions.filter(s => s.startTime > now).length
+
+  const formattedSessions = sessions.map(session => ({
+    ...session,
+    speakers: session.speakers.map(sp => sp.user)
+  }))
+
+  return { total, ongoing, scheduled, sessions: formattedSessions }
+}
 
 
 

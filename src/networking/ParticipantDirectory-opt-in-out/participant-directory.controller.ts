@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Body, Param, ParseIntPipe } from '@nestjs/common'
+import { Controller, Post, Get, Put, Body,Query, Param, ParseIntPipe } from '@nestjs/common'
 import { ParticipantDirectoryService } from './participant-directory.service'
 import { CreateParticipantDirectoryDto } from './dto/create-participant-directory.dto'
 import { UpdateParticipantDirectoryDto } from './dto/update-participant-directory.dto'
@@ -11,6 +11,15 @@ export class ParticipantDirectoryController {
   create(@Body() dto: CreateParticipantDirectoryDto) {
     return this.service.create(dto)
   }
+
+@Get('opted-in-in-event/:eventId')
+async getOptedIn(
+  @Param('eventId', ParseIntPipe) eventId: number,
+  @Query('userId', ParseIntPipe) userId: number
+) {
+  const participants = await this.service.getOptedInParticipants(eventId, userId)
+  return participants.map(p => p.user)
+}
 
   @Get(':eventId/:userId')
   getStatus(
@@ -29,11 +38,7 @@ export class ParticipantDirectoryController {
     return this.service.updateStatus(eventId, userId, dto)
   }
 
-  @Get('opted-in/:eventId')
-  async getOptedIn(@Param('eventId', ParseIntPipe) eventId: number) {
-    const participants = await this.service.getOptedInParticipants(eventId)
-    return participants.map(p => p.user) 
-  }
+
 
 @Get('opted-in/session/:sessionId')
 async getOptedInBySession(@Param('sessionId', ParseIntPipe) sessionId: number) {

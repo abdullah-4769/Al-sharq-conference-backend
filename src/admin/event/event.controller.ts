@@ -11,10 +11,17 @@ export class EventController {
   create(@Body() createEventDto: CreateEventDto) {
     return this.eventService.create(createEventDto);
   }
-
+@Get('short-info')
+  async findAllShortInfo() {
+    return this.eventService.findAllShortInfo();
+  }
 @Get('with-details')
 async findAllWithDetails() {
   return this.eventService.findAllWithDetails()
+}
+@Get('allsponsors/exhibitors')
+async fetchAll() {
+  return this.eventService.getAllSponsorsAndExhibitors()
 }
 
 
@@ -24,10 +31,7 @@ async findAllWithDetails() {
   }
 
 
-@Get('short-info')
-  async findAllShortInfo() {
-    return this.eventService.findAllShortInfo();
-  }
+
 
   @Get('published')
   findPublished() {

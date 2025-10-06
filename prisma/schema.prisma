@@ -69,6 +69,7 @@ model Sponsor {
   linkedin        String?
   twitter         String?
   youtube         String?
+  password        String? 
   products        Product[]         // no onDelete here
   representatives Representative[]  // no onDelete here
   createdAt       DateTime         @default(now())

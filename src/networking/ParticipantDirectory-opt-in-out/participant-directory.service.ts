@@ -51,14 +51,37 @@ export class ParticipantDirectoryService {
     })
   }
 
-  async getOptedInParticipants(eventId: number) {
-    return this.prisma.participantDirectory.findMany({
-      where: { eventId, optedIn: true },
-      select: {
-        user: { select: { id: true, name: true, role: true, file: true } },
+async getOptedInParticipants(eventId: number, currentUserId: number) {
+  const connections = await this.prisma.connectionRequest.findMany({
+    where: {
+      OR: [
+        { senderId: currentUserId, status: 'ACCEPTED' },
+        { receiverId: currentUserId, status: 'ACCEPTED' },
+      ],
+    },
+    select: {
+      senderId: true,
+      receiverId: true,
+    },
+  });
+
+  const connectedUserIds = connections.map(conn => 
+    conn.senderId === currentUserId ? conn.receiverId : conn.senderId
+  );
+
+  return this.prisma.participantDirectory.findMany({
+    where: {
+      eventId,
+      optedIn: true,
+      userId: {
+        notIn: [...connectedUserIds, currentUserId],
       },
-    })
-  }
+    },
+    select: {
+      user: { select: { id: true, name: true, role: true, file: true } },
+    },
+  });
+}
 
 
 async getOptedInBySession(sessionId: number) {

@@ -11,6 +11,17 @@ export class SpeakerController {
     return this.speakerService.create(data);
   }
 
+  @Get('all-short-info')
+  async findAllSpeakers() {
+    return this.speakerService.findAllSpeakers()
+  }
+
+
+@Get('all-details')
+getAllSpeakersDetails() {
+  return this.speakerService.getAllSpeakersDetails()
+}
+
   @Get()
   findAll() {
     return this.speakerService.findAll();
@@ -35,6 +46,7 @@ export class SpeakerController {
   findSpeakersByEvent(@Param('eventId') eventId: string) {
     return this.speakerService.findSpeakersByEvent(Number(eventId));
   }
+
 
 
 }

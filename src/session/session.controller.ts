@@ -4,7 +4,7 @@ import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 
 @Controller('sessions')
-export class SessionController {y
+export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 
   @Post()
@@ -32,9 +32,23 @@ export class SessionController {y
     return this.sessionService.remove(Number(id));
   }
 
-  @Get(':id/related-sessions')
-  async getRelatedSessionsSimple(@Param('id', ParseIntPipe) id: number) {
-    return this.sessionService.findRelatedSessionsSimple(id)
+@Get('event/:eventId/sessions')
+async getSessionsByEvent(@Param('eventId', ParseIntPipe) eventId: number) {
+  return this.sessionService.findRelatedSessionsByEvent(eventId)
+}
+@Get('speaker/:speakerId')
+async getSessionsBySpeaker(@Param('speakerId', ParseIntPipe) speakerId: number) {
+  return this.sessionService.findSessionsBySpeaker(speakerId)
+}
+
+
+  @Get('all')
+  async getAllSessions() {
+    return this.sessionService.findAllSessions()
+  }
+  @Get('simple/:id')
+  getSession(@Param('id', ParseIntPipe) id: number) {
+    return this.sessionService.findSessionById(id)
   }
 
 

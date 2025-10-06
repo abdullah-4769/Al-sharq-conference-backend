@@ -9,9 +9,9 @@ type Contact = { name: string; email: string | null; phone: string | null };
 export class SponsorService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createSponsor(data: CreateSponsorDto) {
-    return this.prisma.sponsor.create({ data });
-  }
+async createSponsor(data: CreateSponsorDto) {
+  return this.prisma.sponsor.create({ data })
+}
 
   async getAllSponsors() {
     return this.prisma.sponsor.findMany();
@@ -23,10 +23,10 @@ export class SponsorService {
     return sponsor;
   }
 
-  async updateSponsor(id: number, data: UpdateSponsorDto) {
-    await this.getSponsorById(id); 
-    return this.prisma.sponsor.update({ where: { id }, data });
-  }
+async updateSponsor(id: number, data: UpdateSponsorDto) {
+  await this.getSponsorById(id)
+  return this.prisma.sponsor.update({ where: { id }, data })
+}
 
   async deleteSponsor(id: number) {
     await this.getSponsorById(id); 
@@ -88,6 +88,43 @@ async getSponsorWithDetails(id: number) {
   };
 }
 
+// session.service.ts
+async findSessionsBySponsor(sponsorId: number) {
+  const now = new Date()
+
+  const sessions = await this.prisma.session.findMany({
+    where: {
+      event: {
+        sponsors: {
+          some: { id: sponsorId }
+        }
+      }
+    },
+    include: {
+      speakers: {
+        include: {
+          user: {
+            select: {
+              name: true,
+              file: true
+            }
+          }
+        }
+      }
+    }
+  })
+
+  const total = sessions.length
+  const ongoing = sessions.filter(s => s.startTime <= now && s.endTime >= now).length
+  const scheduled = sessions.filter(s => s.startTime > now).length
+
+  const formattedSessions = sessions.map(session => ({
+    ...session,
+    speakers: session.speakers.map(sp => sp.user)
+  }))
+
+  return { total, ongoing, scheduled, sessions: formattedSessions }
+}
 
 
 

@@ -105,6 +105,58 @@ async findSpeakersByEvent(eventId: number) {
     }));
   }
 
+async getAllSpeakersDetails() {
+  const speakers = await this.prisma.speaker.findMany({
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          file: true,
+        },
+      },
+    },
+  })
+
+  return speakers.map(speaker => ({
+    speakerid: speaker.id,
+    designations: speaker.designations,
+    user: speaker.user ? speaker.user : null
+  }))
+}
+
+
+async findAllSpeakers() {
+  const speakers = await this.prisma.speaker.findMany({
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          file: true,
+        },
+      },
+      sessions: {
+        select: { id: true, title: true, eventId: true },
+      },
+    },
+  })
+
+  return speakers.map((speaker) => ({
+    id: speaker.id,
+    bio: speaker.bio,
+    designations: speaker.designations,
+    expertise: speaker.expertise,
+    tags: speaker.tags,
+    sessionCount: speaker.sessions.length,
+    sessions: speaker.sessions.map((s) => ({ id: s.id, title: s.title })),
+    user: speaker.user ? speaker.user : null,
+  }))
+}
 
 
 }

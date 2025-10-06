@@ -239,4 +239,38 @@ async getAllEventSessions(eventId: number) {
       exhibitors
     };
   }
+
+
+async getAllSponsorsAndExhibitors() {
+
+  const sponsors = await this.prisma.sponsor.findMany({
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      category: true
+    }
+  })
+
+
+  const exhibitors = await this.prisma.exhibitor.findMany({
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      location: true
+    }
+  })
+
+  return {
+    sponsors,
+    exhibitors
+  }
+}
+
+
+
+
+
+
 }
