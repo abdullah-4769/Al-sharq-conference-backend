@@ -126,7 +126,19 @@ async findSessionsBySponsor(sponsorId: number) {
   return { total, ongoing, scheduled, sessions: formattedSessions }
 }
 
+async getSponsorsShortInfo() {
+  // fetch only needed fields
+  const sponsors = await this.prisma.sponsor.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      Pic_url: true
+    }
+  })
 
+  return sponsors
+}
 
 
 }

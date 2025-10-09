@@ -162,6 +162,17 @@ async findSessionsByExhibitor(exhibitorId: number) {
   return { total, ongoing, scheduled, sessions: formattedSessions }
 }
 
+ async getExhibitorsShortInfo() {
+    const exhibitors = await this.prisma.exhibitor.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        picUrl: true,
+      },
+    });
 
+    return exhibitors;
+  }
 
 }

@@ -9,4 +9,5 @@ export class CreateExhibitorDto {
   linkedin?: string;
   twitter?: string;
   youtube?: string;
+  password: string;
 }

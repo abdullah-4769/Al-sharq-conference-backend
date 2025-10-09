@@ -19,6 +19,9 @@ import { ParticipantDirectoryModule } from './networking/ParticipantDirectory-op
 import { ConnectionModule } from './networking/connection/connection.module';
 import { ChatModule } from './networking/chat/chat.module';
 import { ParticipantsSessionModule } from './user/participants-session/participants-session.module'
+import { UserManagementModule } from './admin/user-management/user-management.module'
+
+
 
 @Module({
   imports: [AuthModule,
@@ -38,7 +41,8 @@ import { ParticipantsSessionModule } from './user/participants-session/participa
     ParticipantDirectoryModule,
     ConnectionModule,
     ChatModule,
-    ParticipantsSessionModule
+    ParticipantsSessionModule,
+    UserManagementModule
   ],
   controllers: [AppController],
   providers: [AppService],

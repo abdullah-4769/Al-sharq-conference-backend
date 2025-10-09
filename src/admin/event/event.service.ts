@@ -12,45 +12,37 @@ export class EventService {
   ) {}
 
 async create(createEventDto: CreateEventDto) {
-  const sponsorConnect = createEventDto.sponsors?.map(s => ({ id: s.id })) || [];
-  const exhibitorConnect = createEventDto.exhibitors?.map(e => ({ id: e.id })) || [];
+  const sponsorConnect = createEventDto.sponsors?.map(s => ({ id: s.id })) || []
+  const exhibitorConnect = createEventDto.exhibitors?.map(e => ({ id: e.id })) || []
 
-  // Step 1: Create event first (without token)
+  // Create event
   const event = await this.prisma.event.create({
     data: {
       title: createEventDto.title,
       description: createEventDto.description,
-      startTime: new Date(createEventDto.startTime),
-      endTime: new Date(createEventDto.endTime),
       location: createEventDto.location,
-      status: createEventDto.status,
+      googleMapLink: createEventDto.googleMapLink,
+      mapstatus: createEventDto.mapstatus ?? false,
       sponsors: { connect: sponsorConnect },
       exhibitors: { connect: exhibitorConnect },
     },
     include: { sponsors: true, exhibitors: true },
-  });
+  })
 
-  // Step 2: Generate token
-  const start = new Date(event.startTime).getTime();
-  const end = new Date(event.endTime).getTime();
-  const now = Date.now();
-  const expiresInSeconds = Math.max(Math.floor((end - now) / 1000), 0);
+  // Generate token (without time-based expiration)
+  const token = this.jwtService.sign({ eventId: event.id })
 
-  const token = this.jwtService.sign(
-    { eventId: event.id },
-    { expiresIn: expiresInSeconds }
-  );
-
-  // Step 3: Save token into DB
+  // Save token
   const updatedEvent = await this.prisma.event.update({
     where: { id: event.id },
     data: { joinToken: token },
     include: { sponsors: true, exhibitors: true },
-  });
+  })
 
-  
-  return updatedEvent;
+  return updatedEvent
 }
+
+
 
 
   async findAll() {
@@ -69,42 +61,60 @@ async create(createEventDto: CreateEventDto) {
   }
 
 async update(id: number, updateEventDto: UpdateEventDto) {
-  await this.findOne(id);
+  await this.findOne(id)
 
-  const sponsorConnect = updateEventDto.sponsors?.map(s => ({ id: s })) || [];
-  const exhibitorConnect = updateEventDto.exhibitors?.map(e => ({ id: e })) || [];
+  const sponsorConnect =
+    updateEventDto.sponsors?.map((s) =>
+      typeof s === 'object' ? { id: s.id } : { id: s }
+    ) || []
+
+  const exhibitorConnect =
+    updateEventDto.exhibitors?.map((e) =>
+      typeof e === 'object' ? { id: e.id } : { id: e }
+    ) || []
 
   const data: any = {
-    ...updateEventDto,
+    title: updateEventDto.title,
+    description: updateEventDto.description,
+    location: updateEventDto.location,
+    googleMapLink: updateEventDto.googleMapLink,
+    startTime: updateEventDto.startTime,
+    endTime: updateEventDto.endTime,
+    mapstatus:
+      typeof updateEventDto.mapstatus === 'boolean'
+        ? updateEventDto.mapstatus
+        : undefined,
     sponsors: sponsorConnect.length ? { set: sponsorConnect } : undefined,
     exhibitors: exhibitorConnect.length ? { set: exhibitorConnect } : undefined,
-  };
+  }
 
   return this.prisma.event.update({
     where: { id },
     data,
-    include: { sponsors: true, exhibitors: true },
-  });
+    include: {
+      sponsors: true,
+      exhibitors: true,
+    },
+  })
 }
 
-  async remove(id: number) {
-    await this.findOne(id);
-    return this.prisma.event.delete({ where: { id } });
-  }
 
-  async findPublished() {
-    const events = await this.prisma.event.findMany({
-      where: { status: 'published' },
-      include: { sponsors: true, exhibitors: true },
-    });
+async remove(id: number) {
+  await this.findOne(id) 
 
-    return events.map(event => {
-      const start = new Date(event.startTime);
-      const end = new Date(event.endTime);
-      const totalTimeInMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
-      return { ...event, totalTimeInMinutes };
-    });
-  }
+
+  await this.prisma.session.deleteMany({
+    where: { eventId: id },
+  })
+
+
+  return this.prisma.event.delete({
+    where: { id },
+  })
+}
+
+
+
 
     async findAllWithDetails() {
     const events = await this.prisma.event.findMany({
@@ -116,11 +126,9 @@ async update(id: number, updateEventDto: UpdateEventDto) {
     });
 
     return events.map(event => {
-      const start = new Date(event.startTime);
-      const end = new Date(event.endTime);
-      const totalTimeInMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+      
 
-      return { ...event, totalTimeInMinutes };
+      return { ...event,  };
     });
   }
 
@@ -128,9 +136,8 @@ async update(id: number, updateEventDto: UpdateEventDto) {
     const events = await this.prisma.event.findMany();
 
     return events.map(event => {
-      const start = new Date(event.startTime);
-      const end = new Date(event.endTime);
-      const totalTimeInMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+
+     
 
       return {
         eventId: event.id,
@@ -139,10 +146,10 @@ async update(id: number, updateEventDto: UpdateEventDto) {
         startTime: event.startTime,
         endTime: event.endTime,
         location: event.location,
-        status: event.status,
+
         createdAt: event.createdAt,
         updatedAt: event.updatedAt,
-        totalTimeInMinutes,
+ 
       };
     });
   }
@@ -268,6 +275,48 @@ async getAllSponsorsAndExhibitors() {
   }
 }
 
+// EventService.ts
+async getEventSummary() {
+  const nowMs = Date.now()
+  const events = await this.prisma.event.findMany({ include: { sessions: true } })
+
+  let totalSessions = 0
+  let liveSessions = 0
+  let scheduledSessions = 0
+
+  const eventDetails = events.map(event => {
+    const eventSessionCount = event.sessions.length
+    totalSessions += eventSessionCount
+
+    let liveCount = 0
+    let scheduledCount = 0
+
+    event.sessions.forEach(session => {
+      const startMs = session.startTime.getTime()
+      const endMs = session.endTime.getTime()
+      if (startMs <= nowMs && endMs >= nowMs) liveCount++
+      if (startMs > nowMs) scheduledCount++
+    })
+
+    liveSessions += liveCount
+    scheduledSessions += scheduledCount
+
+    return {
+      id: event.id,
+      name: event.title,
+      description: event.description,
+      googleMapLink: event.googleMapLink || null,
+      totalSessions: eventSessionCount,
+    }
+  })
+
+  return {
+    totalSessions,
+    liveSessions,
+    scheduledSessions,
+    events: eventDetails,
+  }
+}
 
 
 

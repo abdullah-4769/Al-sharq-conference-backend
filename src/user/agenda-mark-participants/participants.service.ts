@@ -245,6 +245,73 @@ async getBookmarkedSessionsWithEvent(userId: number, eventId: number) {
   }
 }
 
+async getBookmarkedSessionsAll(userId: number) {
+  const nowMs = Date.now() + 300 * 60 * 1000
+
+  // find participant and bookmarked sessions
+  const userParticipant = await this.prisma.participant.findMany({
+    where: { userId },
+    include: { sessions: true },
+  })
+
+  const bookmarkedSessionIds = new Set<number>()
+  userParticipant.forEach((p) =>
+    p.sessions.forEach((s) => bookmarkedSessionIds.add(s.id)),
+  )
+
+  // fetch all active sessions (without event filter)
+  const allSessions = await this.prisma.session.findMany({
+    where: { isActive: true },
+    include: { event: true, speakers: { include: { user: true } } },
+    orderBy: { startTime: 'asc' },
+  })
+
+  // map sessions with bookmark, live, and timeToStart
+  const sessionsWithBookmark = allSessions.map((s) => {
+    const startMs = s.startTime.getTime()
+    const endMs = s.endTime.getTime()
+    const isLive = startMs <= nowMs && endMs >= nowMs
+
+    let timeToStart: number | null = null
+    if (startMs > nowMs) {
+      timeToStart = Math.ceil((startMs - nowMs) / (1000 * 60))
+    }
+
+    return {
+      sessionId: s.id,
+      sessionTitle: s.title,
+      sessionDescription: s.description || null,
+      category: s.category || null,
+      duration: `${s.startTime.toISOString()} - ${s.endTime.toISOString()}`,
+      location: s.location || null,
+      bookmarked: bookmarkedSessionIds.has(s.id),
+      registrationRequired: s.registrationRequired ?? false,
+      isLive,
+      timeToStart,
+      speakers: s.speakers.map((sp) => ({
+        speakerId: sp.id,
+        fullName: sp.user?.name || null,
+        bio: sp.bio || null,
+        pic: sp.user?.file || null,
+      })),
+      event: s.event
+        ? {
+            eventId: s.event.id,
+            eventTitle: s.event.title,
+            eventDescription: s.event.description,
+          }
+        : null,
+    }
+  })
+
+  // filter only bookmarked sessions
+  const bookmarkedSessions = sessionsWithBookmark.filter((s) => s.bookmarked)
+
+  return {
+    liveSessions: bookmarkedSessions.filter((s) => s.isLive),
+    allSessions: bookmarkedSessions,
+  }
+}
 
 
 }

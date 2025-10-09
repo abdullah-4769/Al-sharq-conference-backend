@@ -44,6 +44,12 @@ async getBookmarkedSessions(
 ) {
   return this.participantsService.getBookmarkedSessionsWithEvent(userId, eventId)
 }
+@Get('bookmarked-sessions/:userId')
+async getBookmarkedSessionsAll(
+  @Param('userId', ParseIntPipe) userId: number,
+) {
+  return this.participantsService.getBookmarkedSessionsAll(userId)
+}
 
   
 

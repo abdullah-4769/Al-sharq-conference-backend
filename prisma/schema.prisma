@@ -18,6 +18,7 @@ model User {
   role         String?   @default("participant") 
   organization String?
   photo        String?
+  isBlocked    Boolean   @default(false)
   speakers  Speaker[]
   eventJoins EventJoin[]
   representatives Representative[]
@@ -38,14 +39,14 @@ model Event {
   id           Int       @id @default(autoincrement())
   title        String
   description  String
-  startTime    DateTime
-  endTime      DateTime
+  startTime    DateTime?
+  endTime      DateTime?
   location     String
-  
+  googleMapLink String?
   sessions    Session[]
   participants Participant[]
   joinToken     String?   @unique  
-  status       String     @default("draft") 
+  mapstatus    Boolean 
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   registrations EventRegistration[]
@@ -69,7 +70,8 @@ model Sponsor {
   linkedin        String?
   twitter         String?
   youtube         String?
-  password        String? 
+  password        String?
+  role            String           @default("sponsor") 
   products        Product[]         // no onDelete here
   representatives Representative[]  // no onDelete here
   createdAt       DateTime         @default(now())
@@ -110,6 +112,8 @@ model Exhibitor {
   linkedin        String?
   twitter         String?
   youtube         String?
+  password        String?          // new password field
+  role            String           @default("exhibitor")
   products        ExhibitorProduct[]
   representatives ExhibitorRepresentative[]
   booths          Booth[]

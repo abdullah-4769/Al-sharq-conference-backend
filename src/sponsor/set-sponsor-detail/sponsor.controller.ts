@@ -16,11 +16,17 @@ export class SponsorController {
   findAll() {
     return this.sponsorService.getAllSponsors()
   }
+  
 
+  @Get('event/short-info')
+async getShortInfo() {
+  return this.sponsorService.getSponsorsShortInfo()
+}
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.sponsorService.getSponsorById(id)
   }
+
 
   @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateSponsorDto) {
@@ -41,5 +47,7 @@ export class SponsorController {
 async getSessionsBySponsor(@Param('id') sponsorId: string) {
   return this.sponsorService.findSessionsBySponsor(parseInt(sponsorId, 10))
 }
+
+
 
 }

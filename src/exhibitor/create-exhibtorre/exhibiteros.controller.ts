@@ -17,6 +17,12 @@ export class ExhibiterosController {
     return this.service.getAllExhibitors();
   }
 
+  @Get('event/short-info')
+  async getShortInfo() {
+    return this.service.getExhibitorsShortInfo();
+  }
+
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.service.getExhibitorById(Number(id));
@@ -42,6 +48,8 @@ async findOneWithDetails(@Param('id', ParseIntPipe) id: number) {
 async getSessionsByExhibitor(@Param('id', ParseIntPipe) id: number) {
   return this.service.findSessionsByExhibitor(id)
 }
+
+
 
 
 }

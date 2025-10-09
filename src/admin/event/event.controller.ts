@@ -33,10 +33,7 @@ async fetchAll() {
 
 
 
-  @Get('published')
-  findPublished() {
-    return this.eventService.findPublished();
-  }
+
 
 
   @Get(':id')
@@ -64,5 +61,9 @@ async getEventSessions(@Param('eventId', ParseIntPipe) eventId: number) {
     return this.eventService.getSponsorsAndExhibitorsByEvent(eventId);
   }
 
+ @Get('summary/mapview')
+  async getEventSummary() {
+    return this.eventService.getEventSummary()
+  }
 
 }

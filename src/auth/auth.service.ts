@@ -1,13 +1,14 @@
 import {
   Injectable,
   UnauthorizedException,
-  BadRequestException,
+  BadRequestException,NotFoundException
 } from '@nestjs/common';
 import { PrismaService } from 'src/lib/prisma/prisma.service';
 import { JwtService } from 'src/lib/jwt/jwt.service';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto'
 
 @Injectable()
 export class AuthService {
@@ -111,4 +112,55 @@ export class AuthService {
       },
     };
   }
+
+
+ async updateProfile(
+    userId: number,
+    data: UpdateProfileDto,
+    file?: Express.Multer.File,
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } })
+    if (!user) {
+      throw new NotFoundException('User not found')
+    }
+
+    // check if email already used by another user
+    if (data.email) {
+      const emailExists = await this.prisma.user.findFirst({
+        where: { email: data.email, NOT: { id: userId } },
+      })
+      if (emailExists) {
+        throw new BadRequestException('Email already in use')
+      }
+    }
+
+    let filePath: string | null = user.file
+    if (file) {
+      filePath = file.filename
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: data.name ?? user.name,
+        email: data.email ?? user.email,
+        organization: data.organization ?? user.organization,
+        file: filePath,
+      },
+    })
+
+    return {
+      message: 'Profile updated successfully',
+      user: {
+        id: updated.id,
+        email: updated.email,
+        name: updated.name,
+        organization: updated.organization,
+        file: updated.file,
+        updatedAt: updated.updatedAt,
+      },
+    }
+  }
+
+
 }

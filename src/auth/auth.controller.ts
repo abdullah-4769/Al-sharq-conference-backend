@@ -3,12 +3,14 @@ import {
   Post,
   Body,
   UseInterceptors,
-  UploadedFiles,
+  UploadedFiles,Param,Patch
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto'
+
 
 @Controller('auth')
 export class AuthController {
@@ -41,4 +43,20 @@ async register(
   async login(@Body() data: LoginDto) {
     return this.authService.login(data);
   }
+
+ @Patch('update/:id')
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'file', maxCount: 1 }], { dest: './uploads' }),
+  )
+  async updateProfile(
+    @Param('id') id: string,
+    @Body() data: UpdateProfileDto,
+    @UploadedFiles() files?: { file?: Express.Multer.File[] },
+  ) {
+    const file = files?.file?.[0]
+    return this.authService.updateProfile(Number(id), data, file)
+  }
+
+
+
 }
