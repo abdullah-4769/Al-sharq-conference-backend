@@ -1,6 +1,8 @@
 import { Injectable ,NotFoundException} from '@nestjs/common';
 import { PrismaService } from '../../lib/prisma/prisma.service';
 import { Prisma, Exhibitor } from '@prisma/client';
+import { SpacesService } from '../../spaces/spaces.service'
+import * as bcrypt from 'bcrypt'
 interface SocialMedia {
   name: string;
   website: string;
@@ -14,11 +16,20 @@ interface Contact {
 
 @Injectable()
 export class ExhibiterosService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService,
+    private spacesService: SpacesService,
 
-  async createExhibitor(data: Prisma.ExhibitorCreateInput): Promise<Exhibitor> {
-    return this.prisma.exhibitor.create({ data });
-  }
+  ) {}
+
+async createExhibitor(data: Prisma.ExhibitorCreateInput): Promise<Exhibitor> {
+  const hashedPassword = await bcrypt.hash(data.password || '', 10)
+  return this.prisma.exhibitor.create({
+    data: {
+      ...data,
+      password: hashedPassword,
+    },
+  })
+}
 
 
   async getAllExhibitors(): Promise<Exhibitor[]> {
@@ -43,11 +54,36 @@ export class ExhibiterosService {
     });
   }
 
-async updateExhibitor(id: number, data: Prisma.ExhibitorUpdateInput): Promise<Exhibitor> {
-    return this.prisma.exhibitor.update({
+  async updateExhibitor(
+    id: number,
+    data: Prisma.ExhibitorUpdateInput,
+    file?: Express.Multer.File,
+  ): Promise<Exhibitor> {
+    const exhibitor = await this.prisma.exhibitor.findUnique({ where: { id } })
+    if (!exhibitor) throw new NotFoundException('Exhibitor not found')
+
+    let fileUrl: string | null = exhibitor.picUrl
+
+    if (file && file.buffer) {
+      const uploaded = await this.spacesService.uploadFile(
+        file.originalname,
+        file.buffer,
+        file.mimetype,
+      )
+      if (uploaded && uploaded.url) {
+        fileUrl = uploaded.url
+      }
+    }
+
+    const updatedExhibitor = await this.prisma.exhibitor.update({
       where: { id },
-      data,
-    });
+      data: {
+        ...data,
+        picUrl: fileUrl,
+      },
+    })
+
+    return updatedExhibitor
   }
 
 

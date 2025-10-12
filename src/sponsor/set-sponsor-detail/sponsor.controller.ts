@@ -1,5 +1,7 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { SponsorService } from './sponsor.service';
+import { FileInterceptor } from '@nestjs/platform-express'
+
 import { CreateSponsorDto } from './dto/create-sponsor.dto';
 import { UpdateSponsorDto } from './dto/update-sponsor.dto';
 
@@ -28,9 +30,14 @@ async getShortInfo() {
   }
 
 
-  @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateSponsorDto) {
-    return this.sponsorService.updateSponsor(id, dto)
+ @Patch(':id')
+  @UseInterceptors(FileInterceptor('file'))
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSponsorDto,
+    @UploadedFile() file?: Express.Multer.File
+  ) {
+    return this.sponsorService.updateSponsor(id, dto, file)
   }
 
   @Delete(':id')

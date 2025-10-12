@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body,Put,Delete ,Param,ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body,UploadedFile, UseInterceptors,Patch,Delete ,Param,ParseIntPipe } from '@nestjs/common';
 import { ExhibiterosService } from './exhibiteros.service';
 import { CreateExhibitorDto } from './dto/create-exhibitor.dto';
 import { Prisma } from '@prisma/client';
+import { FileInterceptor } from '@nestjs/platform-express'
 
 @Controller('exhibiteros')
 export class ExhibiterosController {
@@ -33,9 +34,15 @@ async findOneWithDetails(@Param('id', ParseIntPipe) id: number) {
   return this.service.getExhibitorWithDetails(id);
 }
 
-   @Put(':id')
-  async update(@Param('id') id: string, @Body() dto: CreateExhibitorDto) {
-    return this.service.updateExhibitor(Number(id), dto as Prisma.ExhibitorUpdateInput);
+
+  @Patch(':id')
+  @UseInterceptors(FileInterceptor('file'))
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: Partial<CreateExhibitorDto>,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.service.updateExhibitor(id, dto as Prisma.ExhibitorUpdateInput, file)
   }
 
   @Delete(':id')

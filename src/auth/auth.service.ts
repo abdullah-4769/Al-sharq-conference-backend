@@ -9,12 +9,13 @@ import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto'
-
+import { SpacesService } from '../spaces/spaces.service'
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+     private spacesService: SpacesService,
   ) {}
 
   async register(
@@ -76,67 +77,114 @@ export class AuthService {
     };
   }
 
-  async login(data: LoginDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: data.email },
-    });
+async login(data: LoginDto) {
+  // Try to find user first
+  let user = await this.prisma.user.findUnique({
+    where: { email: data.email },
+    include: { speakers: true },
+  })
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+  let roleData: any = null
+
+  // If user not found, check Sponsor
+  if (!user) {
+const sponsor = await this.prisma.sponsor.findFirst({
+  where: { email: data.email },
+})
+
+    if (sponsor) {
+      const valid = await bcrypt.compare(data.password, sponsor.password || '')
+      if (!valid) throw new UnauthorizedException('Invalid credentials')
+
+      roleData = {
+        id: sponsor.id,
+        email: sponsor.email,
+        name: sponsor.name,
+        role: sponsor.role,
+        Pic_url: sponsor.Pic_url,
+        category: sponsor.category,
+        createdAt: sponsor.createdAt,
+        updatedAt: sponsor.updatedAt,
+      }
+
+      return { token: this.jwt.sign({ id: sponsor.id, email: sponsor.email, role: sponsor.role }), user: { ...roleData, sponsorId: sponsor.id } }
     }
 
-    const valid = await bcrypt.compare(data.password, user.password);
-    if (!valid) {
-      throw new UnauthorizedException('Invalid credentials');
+    // If no sponsor, check Exhibitor
+const exhibitor = await this.prisma.exhibitor.findFirst({
+  where: { email: data.email },
+})
+
+    if (exhibitor) {
+      const valid = await bcrypt.compare(data.password, exhibitor.password || '')
+      if (!valid) throw new UnauthorizedException('Invalid credentials')
+
+      roleData = {
+        id: exhibitor.id,
+        email: exhibitor.email,
+        name: exhibitor.name,
+        role: exhibitor.role,
+        picUrl: exhibitor.picUrl,
+        createdAt: exhibitor.createdAt,
+        updatedAt: exhibitor.updatedAt,
+      }
+
+      return { token: this.jwt.sign({ id: exhibitor.id, email: exhibitor.email, role: exhibitor.role }), user: { ...roleData, exhibitorId: exhibitor.id } }
     }
 
-    const token = this.jwt.sign({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
-
-    return {
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        phone: user.phone,
-        role: user.role,
-        organization: user.organization,
-        photo: user.photo, // return only filename
-        file: user.file,   // return only filename
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      },
-    };
+    // No user, sponsor, or exhibitor found
+    throw new UnauthorizedException('Invalid credentials')
   }
 
+  // If user exists, check password
+  const valid = await bcrypt.compare(data.password, user.password)
+  if (!valid) throw new UnauthorizedException('Invalid credentials')
 
- async updateProfile(
-    userId: number,
-    data: UpdateProfileDto,
-    file?: Express.Multer.File,
-  ) {
+  // Build user response
+  const responseUser: any = {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    phone: user.phone,
+    role: user.role,
+    organization: user.organization,
+    photo: user.photo,
+    file: user.file,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  }
+
+  if (user.role === 'speaker' && user.speakers.length > 0) {
+    responseUser.speakerId = user.speakers[0].id
+  }
+
+  const token = this.jwt.sign({ id: user.id, email: user.email, role: user.role })
+
+  return { token, user: responseUser }
+}
+
+
+
+
+ async updateProfile(userId: number, data: UpdateProfileDto, file?: Express.Multer.File) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } })
-    if (!user) {
-      throw new NotFoundException('User not found')
-    }
+    if (!user) throw new NotFoundException('User not found')
 
-    // check if email already used by another user
     if (data.email) {
       const emailExists = await this.prisma.user.findFirst({
         where: { email: data.email, NOT: { id: userId } },
       })
-      if (emailExists) {
-        throw new BadRequestException('Email already in use')
-      }
+      if (emailExists) throw new BadRequestException('Email already in use')
     }
 
-    let filePath: string | null = user.file
+    let fileUrl: string | null = user.file
     if (file) {
-      filePath = file.filename
+      const uploaded = await this.spacesService.uploadFile(
+        file.originalname,
+        file.buffer,
+        file.mimetype,
+      )
+      fileUrl = uploaded.url
     }
 
     const updated = await this.prisma.user.update({
@@ -145,7 +193,7 @@ export class AuthService {
         name: data.name ?? user.name,
         email: data.email ?? user.email,
         organization: data.organization ?? user.organization,
-        file: filePath,
+        file: fileUrl,
       },
     })
 

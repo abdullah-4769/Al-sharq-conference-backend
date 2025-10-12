@@ -1,16 +1,25 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException,BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../lib/prisma/prisma.service';
 import { CreateSponsorDto } from './dto/create-sponsor.dto';
 import { UpdateSponsorDto } from './dto/update-sponsor.dto';
+import * as bcrypt from 'bcrypt'
 type SocialMedia = { name: string; website: string };
 type Contact = { name: string; email: string | null; phone: string | null };
-
+import { SpacesService } from '../../spaces/spaces.service' 
 @Injectable()
 export class SponsorService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService,
+         private spacesService: SpacesService,
+  ) {}
 
 async createSponsor(data: CreateSponsorDto) {
-  return this.prisma.sponsor.create({ data })
+  const hashedPassword = await bcrypt.hash(data.password, 10)
+  return this.prisma.sponsor.create({
+    data: {
+      ...data,
+      password: hashedPassword,
+    },
+  })
 }
 
   async getAllSponsors() {
@@ -23,10 +32,44 @@ async createSponsor(data: CreateSponsorDto) {
     return sponsor;
   }
 
-async updateSponsor(id: number, data: UpdateSponsorDto) {
-  await this.getSponsorById(id)
-  return this.prisma.sponsor.update({ where: { id }, data })
+async updateSponsor(
+  id: number,
+  data: UpdateSponsorDto,
+  file?: Express.Multer.File,
+) {
+  const sponsor = await this.getSponsorById(id)
+
+  let fileUrl: string | null = sponsor.Pic_url
+
+  if (file && file.buffer) {
+    const uploaded = await this.spacesService.uploadFile(
+      file.originalname,
+      file.buffer,
+      file.mimetype,
+    )
+    if (uploaded && uploaded.url) {
+      fileUrl = uploaded.url
+    }
+  }
+
+  const updatedSponsor = await this.prisma.sponsor.update({
+    where: { id },
+    data: {
+      ...data,
+      Pic_url: fileUrl,
+    },
+  })
+
+  return {
+    message: 'Sponsor updated successfully',
+    sponsor: updatedSponsor,
+  }
 }
+
+
+
+
+
 
   async deleteSponsor(id: number) {
     await this.getSponsorById(id); 

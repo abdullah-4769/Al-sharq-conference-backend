@@ -9,6 +9,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+
 import { UpdateProfileDto } from './dto/update-profile.dto'
 
 
@@ -45,9 +46,7 @@ async register(
   }
 
  @Patch('update/:id')
-  @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'file', maxCount: 1 }], { dest: './uploads' }),
-  )
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'file', maxCount: 1 }]))
   async updateProfile(
     @Param('id') id: string,
     @Body() data: UpdateProfileDto,
@@ -56,6 +55,12 @@ async register(
     const file = files?.file?.[0]
     return this.authService.updateProfile(Number(id), data, file)
   }
+
+
+
+
+  
+
 
 
 

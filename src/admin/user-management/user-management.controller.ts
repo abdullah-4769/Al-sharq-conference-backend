@@ -33,4 +33,13 @@ export class UserManagementController {
     return this.userService.getWeeklyAttendance();
   }
 
+@Get('all')
+async getUsersOnly() {
+  return this.userService.getUsersOnly()
+}
+
+  @Get(':id')
+  async getUserById(@Param('id', ParseIntPipe) id: number) {
+    return this.userService.getUserById(id)
+  }
 }

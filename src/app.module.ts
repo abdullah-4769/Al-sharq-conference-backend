@@ -20,8 +20,8 @@ import { ConnectionModule } from './networking/connection/connection.module';
 import { ChatModule } from './networking/chat/chat.module';
 import { ParticipantsSessionModule } from './user/participants-session/participants-session.module'
 import { UserManagementModule } from './admin/user-management/user-management.module'
-
-
+import { SpacesModule } from './spaces/spaces.module'
+import { ConfigModule } from '@nestjs/config'
 
 @Module({
   imports: [AuthModule,
@@ -42,7 +42,11 @@ import { UserManagementModule } from './admin/user-management/user-management.mo
     ConnectionModule,
     ChatModule,
     ParticipantsSessionModule,
-    UserManagementModule
+    UserManagementModule,
+    SpacesModule,
+    ConfigModule.forRoot({
+      isGlobal: true, // makes env variables available everywhere
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],

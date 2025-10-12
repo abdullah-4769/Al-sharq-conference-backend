@@ -5,13 +5,14 @@ import { AuthController } from './auth.controller';
 import { PrismaService } from 'src/lib/prisma/prisma.service';
 import { JwtService } from 'src/lib/jwt/jwt.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { SpacesModule } from '../spaces/spaces.module'
 
 @Module({
   imports: [
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'supersecretkey',
       signOptions: { expiresIn: '7d' },
-    }),
+    }),SpacesModule
   ],
   controllers: [AuthController],
   providers: [AuthService, PrismaService, JwtService, JwtStrategy],
