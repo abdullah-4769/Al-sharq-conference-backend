@@ -35,15 +35,16 @@ async findOneWithDetails(@Param('id', ParseIntPipe) id: number) {
 }
 
 
-  @Patch(':id')
-  @UseInterceptors(FileInterceptor('file'))
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: Partial<CreateExhibitorDto>,
-    @UploadedFile() file?: Express.Multer.File,
-  ) {
-    return this.service.updateExhibitor(id, dto as Prisma.ExhibitorUpdateInput, file)
-  }
+@Patch(':id')
+@UseInterceptors(FileInterceptor('file'))
+async update(
+  @Param('id', ParseIntPipe) id: number,
+  @Body() dto: Partial<CreateExhibitorDto>,
+  @UploadedFile() file?: Express.Multer.File,
+) {
+  if ('id' in dto) delete (dto as any).id
+  return this.service.updateExhibitor(id, dto as Prisma.ExhibitorUpdateInput, file)
+}
 
   @Delete(':id')
   async remove(@Param('id') id: string) {

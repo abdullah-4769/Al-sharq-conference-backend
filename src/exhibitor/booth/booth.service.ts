@@ -7,11 +7,21 @@ import { UpdateBoothDto } from './dto/update-booth.dto';
 export class BoothService {
   constructor(private prisma: PrismaService) {}
 
-  async create(dto: CreateBoothDto) {
+ async create(dto: CreateBoothDto) {
+    const existingBooth = await this.prisma.booth.findFirst({
+      where: { exhibitorId: dto.exhibitorId },
+    })
+
+    if (existingBooth) {
+      await this.prisma.booth.delete({
+        where: { id: existingBooth.id },
+      })
+    }
+
     return this.prisma.booth.create({
       data: dto,
-      include: { exhibitor: true }, // include exhibitor details
-    });
+      include: { exhibitor: true },
+    })
   }
 
   async findAll() {
@@ -45,4 +55,15 @@ export class BoothService {
       include: { exhibitor: true },
     });
   }
+  async findByExhibitor(exhibitorId: number) {
+    const booth = await this.prisma.booth.findFirst({
+      where: { exhibitorId },
+      include: { exhibitor: false },
+    })
+    if (!booth) throw new NotFoundException('Booth not found for this exhibitor')
+    return booth
+  }
+
+
+
 }

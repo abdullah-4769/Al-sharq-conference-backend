@@ -22,6 +22,8 @@ import { ParticipantsSessionModule } from './user/participants-session/participa
 import { UserManagementModule } from './admin/user-management/user-management.module'
 import { SpacesModule } from './spaces/spaces.module'
 import { ConfigModule } from '@nestjs/config'
+import { BrevoModule } from './brevo/brevo.module'
+
 
 @Module({
   imports: [AuthModule,
@@ -43,7 +45,7 @@ import { ConfigModule } from '@nestjs/config'
     ChatModule,
     ParticipantsSessionModule,
     UserManagementModule,
-    SpacesModule,
+    SpacesModule,BrevoModule,
     ConfigModule.forRoot({
       isGlobal: true, // makes env variables available everywhere
     }),

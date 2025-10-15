@@ -10,6 +10,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto'
 import { SpacesService } from '../spaces/spaces.service'
+
 @Injectable()
 export class AuthService {
   constructor(

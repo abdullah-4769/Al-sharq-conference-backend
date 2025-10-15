@@ -65,7 +65,7 @@ model Sponsor {
   Pic_url         String?
   description     String?
   website         String?
-  email           String?
+  email           String?          @unique
   phone           String?
   linkedin        String?
   twitter         String?
@@ -107,7 +107,7 @@ model Exhibitor {
   description     String?
   location        String?
   website         String?
-  email           String?
+  email           String?          @unique
   phone           String?
   linkedin        String?
   twitter         String?

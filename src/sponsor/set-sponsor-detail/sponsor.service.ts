@@ -26,11 +26,18 @@ async createSponsor(data: CreateSponsorDto) {
     return this.prisma.sponsor.findMany();
   }
 
-  async getSponsorById(id: number) {
-    const sponsor = await this.prisma.sponsor.findUnique({ where: { id } });
-    if (!sponsor) throw new NotFoundException('Sponsor not found');
-    return sponsor;
-  }
+async getSponsorById(id: number) {
+  const sponsor = await this.prisma.sponsor.findUnique({
+    where: { id },
+  });
+
+  if (!sponsor) throw new NotFoundException('Sponsor not found');
+
+
+  const { password, ...safeSponsor } = sponsor;
+  return safeSponsor;
+}
+
 
 async updateSponsor(
   id: number,
@@ -181,6 +188,22 @@ async getSponsorsShortInfo() {
   })
 
   return sponsors
+}
+
+
+async resetPassword(id: number, newPassword: string) {
+
+  const sponsor = await this.prisma.sponsor.findUnique({ where: { id } })
+  if (!sponsor) throw new NotFoundException('Sponsor not found')
+
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10)
+  await this.prisma.sponsor.update({
+    where: { id },
+    data: { password: hashedPassword },
+  })
+
+  return { message: 'Password updated successfully' }
 }
 
 

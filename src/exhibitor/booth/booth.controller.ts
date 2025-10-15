@@ -31,4 +31,11 @@ export class BoothController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.service.remove(id);
   }
+
+  @Get('exhibitor/:exhibitorId')
+  findByExhibitor(@Param('exhibitorId', ParseIntPipe) exhibitorId: number) {
+    return this.service.findByExhibitor(exhibitorId)
+  }
+
+
 }

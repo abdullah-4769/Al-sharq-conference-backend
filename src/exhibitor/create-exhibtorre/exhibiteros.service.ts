@@ -54,37 +54,35 @@ async createExhibitor(data: Prisma.ExhibitorCreateInput): Promise<Exhibitor> {
     });
   }
 
-  async updateExhibitor(
-    id: number,
-    data: Prisma.ExhibitorUpdateInput,
-    file?: Express.Multer.File,
-  ): Promise<Exhibitor> {
-    const exhibitor = await this.prisma.exhibitor.findUnique({ where: { id } })
-    if (!exhibitor) throw new NotFoundException('Exhibitor not found')
+async updateExhibitor(
+  id: number,
+  data: Prisma.ExhibitorUpdateInput,
+  file?: Express.Multer.File,
+): Promise<Exhibitor> {
+  const exhibitor = await this.prisma.exhibitor.findUnique({ where: { id } })
+  if (!exhibitor) throw new NotFoundException('Exhibitor not found')
 
-    let fileUrl: string | null = exhibitor.picUrl
+  let fileUrl: string | null = exhibitor.picUrl
 
-    if (file && file.buffer) {
-      const uploaded = await this.spacesService.uploadFile(
-        file.originalname,
-        file.buffer,
-        file.mimetype,
-      )
-      if (uploaded && uploaded.url) {
-        fileUrl = uploaded.url
-      }
-    }
-
-    const updatedExhibitor = await this.prisma.exhibitor.update({
-      where: { id },
-      data: {
-        ...data,
-        picUrl: fileUrl,
-      },
-    })
-
-    return updatedExhibitor
+  if (file && file.buffer) {
+    const uploaded = await this.spacesService.uploadFile(
+      file.originalname,
+      file.buffer,
+      file.mimetype,
+    )
+    if (uploaded?.url) fileUrl = uploaded.url
   }
+
+  const cleanData = { ...data }
+  delete (cleanData as any).id
+  delete (cleanData as any).createdAt
+  delete (cleanData as any).updatedAt
+
+  return this.prisma.exhibitor.update({
+    where: { id },
+    data: { ...cleanData, picUrl: fileUrl },
+  })
+}
 
 
   async deleteExhibitor(id: number): Promise<Exhibitor> {

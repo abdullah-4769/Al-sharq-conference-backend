@@ -167,6 +167,7 @@ async findRelatedSessionsByEvent(eventId: number) {
     location: s.location,
     category: s.category,
     capacity: s.capacity,
+        registration: s.registrationRequired,
     speakers: s.speakers.map(sp => ({
       name: sp.user.name,
       file: sp.user.file
