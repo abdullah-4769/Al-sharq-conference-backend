@@ -6,17 +6,18 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-app.enableCors({
-  origin: ['http://localhost:3000', 'http://localhost:5173'],
-  methods: 'GET,POST,PUT,PATCH,DELETE',
-  credentials: true,
-});
-
+  app.enableCors({
+    origin: '*', // allow all frontends (Postman, localhost, domain, etc.)
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    credentials: true,
+  });
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
 
-  await app.listen(5000);
+  await app.listen(3000);
+  console.log(`Server is running on http://localhost:3000`);
 }
+
 bootstrap();

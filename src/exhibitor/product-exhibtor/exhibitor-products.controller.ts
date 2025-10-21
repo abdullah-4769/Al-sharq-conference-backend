@@ -30,4 +30,11 @@ export class ExhibitorProductsController {
   async remove(@Param('id') id: string) {
     return this.service.deleteProduct(Number(id));
   }
+
+    @Get('exhibitor/:exhibitorId')
+  async findByExhibitor(@Param('exhibitorId') exhibitorId: string) {
+    return this.service.getProductsByExhibitorId(Number(exhibitorId))
+  }
+
+
 }

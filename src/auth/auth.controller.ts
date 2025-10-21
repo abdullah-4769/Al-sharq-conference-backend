@@ -11,7 +11,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
 import { UpdateProfileDto } from './dto/update-profile.dto'
-
+import { SetPasswordDto } from './dto/set-password.dto'
 
 @Controller('auth')
 export class AuthController {
@@ -58,7 +58,13 @@ async register(
 
 
 
-
+@Patch('set-password/:id')
+async setPassword(
+  @Param('id') id: string,
+  @Body() data: SetPasswordDto,
+) {
+  return this.authService.setPassword(Number(id), data.password)
+}
   
 
 

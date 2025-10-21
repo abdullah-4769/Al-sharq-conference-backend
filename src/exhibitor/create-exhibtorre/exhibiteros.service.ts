@@ -209,4 +209,21 @@ async findSessionsByExhibitor(exhibitorId: number) {
     return exhibitors;
   }
 
+async setPassword(id: number, password: string) {
+  const exhibitor = await this.prisma.exhibitor.findUnique({ where: { id } })
+  if (!exhibitor) throw new NotFoundException('Exhibitor not found')
+
+  const hashedPassword = await bcrypt.hash(password, 10)
+
+  return this.prisma.exhibitor.update({
+    where: { id },
+    data: { password: hashedPassword },
+    select: { id: true, name: true, email: true },
+  })
+}
+
+
+
+
+
 }

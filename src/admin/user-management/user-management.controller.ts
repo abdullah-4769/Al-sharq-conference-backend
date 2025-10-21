@@ -42,4 +42,8 @@ async getUsersOnly() {
   async getUserById(@Param('id', ParseIntPipe) id: number) {
     return this.userService.getUserById(id)
   }
+
+
+
+  
 }

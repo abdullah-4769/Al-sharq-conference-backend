@@ -24,11 +24,11 @@ import { SpacesModule } from './spaces/spaces.module'
 import { ConfigModule } from '@nestjs/config'
 import { BrevoModule } from './brevo/brevo.module'
 
-
+import { AgoraModule } from './agora/agora.module'
 @Module({
   imports: [AuthModule,
     ProfileModule,
-    ProductModule,
+    ProductModule,AgoraModule,
     EventModule,
     ExhibiterosModule,
     SponsorModule,

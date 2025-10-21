@@ -57,7 +57,13 @@ async getSessionsByExhibitor(@Param('id', ParseIntPipe) id: number) {
   return this.service.findSessionsByExhibitor(id)
 }
 
-
+@Patch(':id/password')
+async setPassword(
+  @Param('id', ParseIntPipe) id: number,
+  @Body('password') password: string,
+) {
+  return this.service.setPassword(id, password)
+}
 
 
 }

@@ -59,4 +59,13 @@ export class ExhibitorProductsService {
       where: { id },
     });
   }
+
+    async getProductsByExhibitorId(exhibitorId: number): Promise<ExhibitorProduct[]> {
+    return this.prisma.exhibitorProduct.findMany({
+      where: { exhibitorId },
+      include: { exhibitor: true },
+    })
+  }
+
+
 }
