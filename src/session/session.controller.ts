@@ -51,5 +51,16 @@ async getSessionsBySpeaker(@Param('speakerId', ParseIntPipe) speakerId: number) 
     return this.sessionService.findSessionById(id)
   }
 
+ @Get(':sessionId/user-status/:userId')
+  async getUserSessionStatus(
+    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
+    return this.sessionService.getUserSessionStatus(sessionId, userId);
+  }
+
 
 }
+
+
+

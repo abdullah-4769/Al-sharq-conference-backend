@@ -80,6 +80,16 @@ async register(
 
 async login(data: LoginDto) {
   // Try to find user first
+
+    const latestEvent = await this.prisma.event.findFirst({
+    orderBy: { createdAt: 'desc' },
+    select: { id: true },
+  })
+
+  let latestEventId = latestEvent ? latestEvent.id : null
+
+
+
   let user = await this.prisma.user.findUnique({
     where: { email: data.email },
     include: { speakers: true },
@@ -108,7 +118,7 @@ const sponsor = await this.prisma.sponsor.findFirst({
         updatedAt: sponsor.updatedAt,
       }
 
-      return { token: this.jwt.sign({ id: sponsor.id, email: sponsor.email, role: sponsor.role }), user: { ...roleData, sponsorId: sponsor.id } }
+      return { token: this.jwt.sign({ id: sponsor.id, email: sponsor.email, role: sponsor.role }), user: { ...roleData, sponsorId: sponsor.id ,latestEventId:latestEventId} }
     }
 
     // If no sponsor, check Exhibitor
@@ -130,7 +140,7 @@ const exhibitor = await this.prisma.exhibitor.findFirst({
         updatedAt: exhibitor.updatedAt,
       }
 
-      return { token: this.jwt.sign({ id: exhibitor.id, email: exhibitor.email, role: exhibitor.role }), user: { ...roleData, exhibitorId: exhibitor.id } }
+      return { token: this.jwt.sign({ id: exhibitor.id, email: exhibitor.email, role: exhibitor.role }), user: { ...roleData, exhibitorId: exhibitor.id },latestEventId:latestEventId }
     }
 
     // No user, sponsor, or exhibitor found
@@ -161,7 +171,7 @@ const exhibitor = await this.prisma.exhibitor.findFirst({
 
   const token = this.jwt.sign({ id: user.id, email: user.email, role: user.role })
 
-  return { token, user: responseUser }
+  return { token, user: responseUser ,latestEventId:latestEventId }
 }
 
 

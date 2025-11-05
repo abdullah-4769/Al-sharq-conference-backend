@@ -278,7 +278,32 @@ async findSessionById(id: number) {
 }
 
 
+// session.service.ts
+async getUserSessionStatus(sessionId: number, userId: number) {
+  const [session, user, registration, bookmark] = await Promise.all([
+    this.prisma.session.findUnique({ where: { id: sessionId } }),
+    this.prisma.user.findUnique({ where: { id: userId } }),
+    this.prisma.sessionRegistration.findFirst({
+      where: { sessionId, userId }
+    }),
+    this.prisma.participant.findFirst({
+      where: { sessions: { some: { id: sessionId } }, userId }
+    })
+  ]);
 
+  if (!session) {
+    throw new NotFoundException(`Session with id ${sessionId} not found`);
+  }
+
+  if (!user) {
+    throw new NotFoundException(`User with id ${userId} not found`);
+  }
+
+  return {
+    isRegistered: !!registration,
+    isBookmarked: !!bookmark,
+  };
+}
 
 
 }

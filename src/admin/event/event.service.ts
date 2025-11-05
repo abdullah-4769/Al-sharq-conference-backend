@@ -12,6 +12,16 @@ export class EventService {
   ) {}
 
 async create(createEventDto: CreateEventDto) {
+ 
+  await this.prisma.sessionRegistration.deleteMany({})
+  await this.prisma.sessionJoin.deleteMany({})
+  await this.prisma.participantDirectory.deleteMany({})
+  await this.prisma.participant.deleteMany({}) // Add this
+  await this.prisma.eventRegistration.deleteMany({}) // Add this
+  await this.prisma.eventJoin.deleteMany({}) // Add this
+  await this.prisma.session.deleteMany({})
+  await this.prisma.event.deleteMany({})
+  
   const sponsorConnect = createEventDto.sponsors?.map(s => ({ id: s.id })) || []
   const exhibitorConnect = createEventDto.exhibitors?.map(e => ({ id: e.id })) || []
 
