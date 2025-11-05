@@ -135,13 +135,18 @@ async update(id: number, data: UpdateSessionDto) {
   })
 }
 
-  async remove(id: number) {
-    const session = await this.prisma.session.findUnique({ where: { id } })
-    if (!session) throw new NotFoundException(`Session with id ${id} not found`)
+async remove(id: number) {
+  const session = await this.prisma.session.findUnique({ where: { id } })
+  if (!session) throw new NotFoundException(`Session with id ${id} not found`)
 
-    await this.prisma.session.delete({ where: { id } })
-    return { message: 'Session deleted successfully' }
-  }
+  await this.prisma.sessionRegistration.deleteMany({
+    where: { sessionId: id },
+  })
+
+  await this.prisma.session.delete({ where: { id } })
+  return { message: 'Session deleted successfully' }
+}
+
 
 async findRelatedSessionsByEvent(eventId: number) {
   const sessions = await this.prisma.session.findMany({
