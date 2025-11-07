@@ -23,8 +23,9 @@ import { UserManagementModule } from './admin/user-management/user-management.mo
 import { SpacesModule } from './spaces/spaces.module'
 import { ConfigModule } from '@nestjs/config'
 import { BrevoModule } from './brevo/brevo.module'
-
+import { SessionForumModule } from './forum/session-forum/session-forum.module';
 import { AgoraModule } from './agora/agora.module'
+import { CommentsModule } from './forum/comments/comments.module'
 @Module({
   imports: [AuthModule,
     ProfileModule,
@@ -34,6 +35,8 @@ import { AgoraModule } from './agora/agora.module'
     SponsorModule,
     ExhibitorProductsModule,
     RepresentativeModule,
+    CommentsModule ,
+    SessionForumModule,
     ExhibitorRepresentativeModule,
     BoothModule,
     SpeakerModule,

@@ -31,6 +31,8 @@ model User {
   receivedMessages ChatMessage[]  @relation("ReceivedMessages")
   sessionRegistrations SessionRegistration[]
   sessionJoins       SessionJoin[]
+    forumsCreated SessionForum[]
+  comments      ForumComment[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
@@ -206,6 +208,7 @@ model Session {
   sessionRegistrations SessionRegistration[]
   sessionJoins         SessionJoin[]
   participantDirectories ParticipantDirectory[]
+    forums SessionForum[]
   isActive    Boolean      @default(true)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -331,4 +334,43 @@ model SessionJoin {
   joinedAt  DateTime @default(now())
 
   @@unique([sessionId, userId])
+}
+
+
+
+model SessionForum {
+  id        Int       @id @default(autoincrement())
+  session   Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  title     String
+  content   String
+  tag       String       @default("Workshop") 
+  status    ForumStatus @default(PENDING)
+
+  comments  ForumComment[]   // all comments under this forum
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+
+enum ForumStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ForumComment {
+  id             Int           @id @default(autoincrement())
+  forum          SessionForum  @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  forumId        Int
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         Int
+  content        String
+  parentComment  ForumComment? @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  parentCommentId Int?
+  replies        ForumComment[] @relation("CommentReplies")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
