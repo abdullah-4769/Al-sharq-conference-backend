@@ -18,11 +18,6 @@ async register(dto: CreateSessionRegistrationDto) {
   })
 
   if (!session) throw new NotFoundException('Session not found')
- 
-
-  const now = Date.now()
-  const tokenPayload = this.decodeToken(session.joinToken)
-  if (tokenPayload.exp * 1000 < now) throw new BadRequestException('Session join token has expired')
 
   // check if already registered
   const existing = await this.prisma.sessionRegistration.findFirst({
@@ -76,12 +71,13 @@ async register(dto: CreateSessionRegistrationDto) {
       whyWantToJoin: dto.whyWantToJoin,
       relevantExperience: dto.relevantExperience,
       joinCode,
-      token: session.joinToken,
+  token: session.joinToken ?? '',
     },
   })
 
   return { joinCode, token: session.joinToken, remainingCapacity }
 }
+
 
 
 
