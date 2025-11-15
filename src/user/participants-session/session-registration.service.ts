@@ -18,7 +18,7 @@ async register(dto: CreateSessionRegistrationDto) {
   })
 
   if (!session) throw new NotFoundException('Session not found')
-  if (!session.joinToken) throw new BadRequestException('Session join token not available')
+ 
 
   const now = Date.now()
   const tokenPayload = this.decodeToken(session.joinToken)
