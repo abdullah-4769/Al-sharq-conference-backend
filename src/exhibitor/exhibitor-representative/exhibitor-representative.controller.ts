@@ -31,4 +31,11 @@ export class ExhibitorRepresentativeController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.service.remove(id);
   }
+
+@Get('exhibitor/:exhibitorId')
+getByExhibitor(@Param('exhibitorId', ParseIntPipe) exhibitorId: number) {
+  return this.service.findByExhibitor(exhibitorId);
+}
+
+
 }

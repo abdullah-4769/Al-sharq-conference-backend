@@ -60,4 +60,16 @@ export class ExhibitorRepresentativeService {
       },
     });
   }
+
+async findByExhibitor(exhibitorId: number) {
+  return this.prisma.exhibitorRepresentative.findMany({
+    where: { exhibitorId },
+    include: {
+      exhibitor: false,
+      user: true,
+    },
+  });
+}
+
+
 }

@@ -145,7 +145,7 @@ async getExhibitorWithDetails(id: number) {
         email: rep.user.email,
         phone: rep.user.phone,
         organization: rep.user.organization,
-        photo: rep.user.photo,
+        file: rep.user.file,
       },
     })),
     booths: exhibitor.booths.map(b => ({
