@@ -47,4 +47,15 @@ async getUserSessions(
 
 
 
+  @Post(':sessionId/join')
+  async joinSession(
+    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Body('userId', ParseIntPipe) userId: number,
+  ) {
+    return this.service.joinSession(userId, sessionId)
+  }
+
+
+
+
 }

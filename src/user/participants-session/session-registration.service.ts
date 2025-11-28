@@ -259,6 +259,43 @@ async getSessionsByUser(userId: number, eventId?: number) {
   }))
 }
 
+async joinSession(userId: number, sessionId: number) {
+  const session = await this.prisma.session.findUnique({
+    where: { id: sessionId },
+  })
+  if (!session) throw new NotFoundException('Session not found')
+
+  const registrationRequired = session.registrationRequired
+
+  if (registrationRequired) {
+    const registration = await this.prisma.sessionRegistration.findFirst({
+      where: { userId, sessionId },
+    })
+    if (!registration) {
+      throw new BadRequestException('User not registered for this session')
+    }
+  } else {
+    const existingRegistration = await this.prisma.sessionRegistration.findFirst({
+      where: { sessionId, userId },
+    })
+    if (existingRegistration) {
+      throw new BadRequestException('User cannot join directly, registration exists')
+    }
+  }
+
+  const existingJoin = await this.prisma.sessionJoin.findUnique({
+    where: { sessionId_userId: { sessionId, userId } },
+  })
+  if (existingJoin) {
+    return { message: 'User already joined this session' }
+  }
+
+  await this.prisma.sessionJoin.create({
+    data: { sessionId, userId },
+  })
+
+  return { message: 'User successfully joined the session' }
+}
 
 
 
