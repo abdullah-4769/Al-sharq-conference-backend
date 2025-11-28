@@ -15,7 +15,7 @@ export class RegisterDto {
   phone?: string
 
   @IsOptional()
-  @IsIn(['participant', 'speaker', 'exhibitor', 'sponsor', 'organizer'])
+  @IsIn(['participant', 'speaker', 'exhibitor', 'sponsor', 'organizer', 'registrationteam'])
   role?: string
 
   @IsOptional()

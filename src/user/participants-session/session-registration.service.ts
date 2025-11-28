@@ -206,7 +206,7 @@ async getAllRegistrations() {
   }
 
 async getSessionsByUser(userId: number, eventId?: number) {
-  const registrations = await this.prisma.sessionRegistration.findMany({
+  const registered = await this.prisma.sessionRegistration.findMany({
     where: {
       userId,
       ...(eventId && { session: { eventId } }),
@@ -215,17 +215,60 @@ async getSessionsByUser(userId: number, eventId?: number) {
       session: {
         include: {
           event: true,
-          speakers: {
-            include: {
-              user: true, // include user details for each speaker
-            },
-          },
+          speakers: { include: { user: true } },
         },
       },
     },
   })
 
-  return registrations.map(reg => ({
+  const registeredSessionIds = registered.map(r => r.sessionId)
+
+  const openSessions = await this.prisma.session.findMany({
+    where: {
+      registrationRequired: false,
+      ...(eventId && { eventId }),
+      id: { notIn: registeredSessionIds },
+    },
+    include: {
+      event: true,
+      speakers: { include: { user: true } },
+    },
+  })
+
+  const openMapped = openSessions.map(session => ({
+    sessionId: session.id,
+    title: session.title,
+    description: session.description,
+    startTime: session.startTime,
+    endTime: session.endTime,
+    location: session.location,
+    category: session.category,
+    isActive: session.isActive,
+    joinCode: null,
+    event: session.event
+      ? {
+          eventId: session.event.id,
+          title: session.event.title,
+          description: session.event.description,
+        }
+      : null,
+    speakers: session.speakers.map(sp => ({
+      speakerId: sp.id,
+      bio: sp.bio,
+      expertise: sp.expertise,
+      designations: sp.designations,
+      user: sp.user
+        ? {
+            userId: sp.user.id,
+            name: sp.user.name,
+            file: sp.user.file,
+            email: sp.user.email,
+          }
+        : null,
+    })),
+  }))
+
+  const registeredMapped = registered.map(reg => ({
     sessionId: reg.session.id,
     title: reg.session.title,
     description: reg.session.description,
@@ -257,7 +300,10 @@ async getSessionsByUser(userId: number, eventId?: number) {
         : null,
     })),
   }))
+
+  return [...registeredMapped, ...openMapped]
 }
+
 
 async joinSession(userId: number, sessionId: number) {
   const session = await this.prisma.session.findUnique({
