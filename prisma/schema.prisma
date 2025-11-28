@@ -218,14 +218,14 @@ model Session {
 
 model Participant {
   id        Int       @id @default(autoincrement())
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
-  event     Event     @relation(fields: [eventId], references: [id])
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId   Int
   sessions  Session[] @relation("ParticipantSessions")
-
   createdAt DateTime  @default(now())
 }
+
 
 
 
@@ -309,11 +309,11 @@ model ChatMessage {
 
 model SessionRegistration {
   id                 Int      @id @default(autoincrement())
-  user               User     @relation(fields: [userId], references: [id])
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId             Int
-  event              Event?   @relation(fields: [eventId], references: [id])
+  event              Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId            Int?
-  session            Session  @relation(fields: [sessionId], references: [id])
+ session            Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionId          Int
   name               String?
   organization       String?
