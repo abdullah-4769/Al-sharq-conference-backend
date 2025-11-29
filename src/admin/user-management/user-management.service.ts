@@ -177,5 +177,13 @@ async getAllParticipants() {
 
     return user
   }
+async getRegistrationTeam() {
+  return this.prisma.user.findMany({
+    where: { role: 'registrationteam' }
+  })
+}
+
+
+
 
 }

@@ -37,11 +37,15 @@ export class UserManagementController {
 async getUsersOnly() {
   return this.userService.getUsersOnly()
 }
-
+@Get('registrationteam')
+async getRegistrationTeam() {
+  return this.userService.getRegistrationTeam()
+}
   @Get(':id')
   async getUserById(@Param('id', ParseIntPipe) id: number) {
     return this.userService.getUserById(id)
   }
+
 
 
 
