@@ -10,7 +10,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto'
 import { SpacesService } from '../spaces/spaces.service'
-
+import { randomInt } from 'crypto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -244,5 +244,51 @@ async updateProfile(userId: number, data: UpdateProfileDto, file?: Express.Multe
 
     return { message: 'Password updated successfully' }
   }
+
+
+
+
+async sendOtp(email: string) {
+  const user = await this.prisma.user.findUnique({ where: { email } })
+  if (!user) throw new NotFoundException('User not found')
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString()
+  const expiry = new Date()
+  expiry.setMinutes(expiry.getMinutes() + 10)
+
+  await this.prisma.user.update({
+    where: { email },
+    data: { otp, otpExpiry: expiry },
+  })
+
+  return {
+    message: 'OTP generated successfully',
+    otp, 
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      // include other non-sensitive fields you want
+    }
+  }
+}
+
+
+
+async verifyOtp(email: string, otp: string) {
+  const user = await this.prisma.user.findUnique({ where: { email } });
+  if (!user) throw new NotFoundException('User not found');
+
+  if (user.otp !== otp) throw new BadRequestException('Invalid OTP');
+  if (!user.otpExpiry || user.otpExpiry < new Date()) throw new BadRequestException('OTP expired');
+
+  await this.prisma.user.update({
+    where: { email },
+    data: { otp: null, otpExpiry: null },
+  });
+
+  return { message: 'OTP verified successfully' };
+}
+
 
 }

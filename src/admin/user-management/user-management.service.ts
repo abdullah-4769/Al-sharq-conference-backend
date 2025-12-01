@@ -1,10 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../../lib/prisma/prisma.service';
 import { UpdateBlockDto } from './dto/update-block.dto'
+import { BrevoService } from '../../brevo/brevo.service'
+
 
 @Injectable()
 export class UserManagementService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService,
+    private brevoService: BrevoService
+
+  ) {}
 
 async getAllParticipants() {
 
@@ -183,7 +188,11 @@ async getRegistrationTeam() {
   })
 }
 
+  async sendEmailToAddress(email: string) {
+    const subject = 'Test Email'
+    const htmlContent = `<p>Hello, this is a test email from the system.</p>`
 
-
+    return this.brevoService.sendEmail(email, subject, htmlContent)
+  }
 
 }

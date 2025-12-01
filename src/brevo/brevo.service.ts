@@ -1,32 +1,50 @@
 import { Injectable } from '@nestjs/common';
-import axios from 'axios';
+import nodemailer from 'nodemailer';
+import { BREVO_SENDER_EMAIL, BREVO_SENDER_NAME } from './brevo.constants';
 
 @Injectable()
 export class BrevoService {
-  private readonly apiKey = process.env.BREVO_API_KEY;
+  private transporter;
+
+  constructor() {
+    this.transporter = nodemailer.createTransport({
+      host: 'smtp-relay.brevo.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: BREVO_SENDER_EMAIL,
+        pass: process.env.BREVO_API_KEY
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+  }
 
   async sendEmail(to: string, subject: string, htmlContent: string) {
-    const url = 'https://api.brevo.com/v3/smtp/email';
-
-    const data = {
-      sender: { email: 'no-reply@yourdomain.com', name: 'Al Sharq Forum' },
-      to: [{ email: to }],
+    return this.transporter.sendMail({
+      from: `"${BREVO_SENDER_NAME}" <${BREVO_SENDER_EMAIL}>`,
+      to,
       subject,
-      htmlContent
-    };
+      html: htmlContent
+    });
+  }
 
-    const headers = {
-      'accept': 'application/json',
-      'api-key': this.apiKey,
-      'content-type': 'application/json'
-    };
+  async sendOtp(to: string, otp: string) {
+    const subject = 'Your OTP Code';
+    const html = `<p>Your OTP is <strong>${otp}</strong></p>`;
+    return this.sendEmail(to, subject, html);
+  }
 
-    try {
-      const res = await axios.post(url, data, { headers });
-      return res.data;
-    } catch (error) {
-      console.error('Email send failed', error.response?.data || error.message);
-      throw error;
-    }
+  async sendNotification(to: string, message: string) {
+    const subject = 'Notification';
+    const html = `<p>${message}</p>`;
+    return this.sendEmail(to, subject, html);
+  }
+
+  async sendInvitation(to: string, event: string, date: string) {
+    const subject = 'You are Invited';
+    const html = `<p>You are invited to <strong>${event}</strong> on <strong>${date}</strong>.</p>`;
+    return this.sendEmail(to, subject, html);
   }
 }

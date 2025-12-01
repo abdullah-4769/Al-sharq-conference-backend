@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Delete, Body, Param, ParseIntPipe } from '@nestjs/common'
+import { Controller, Get, Patch, Delete,Post, Body, Param, ParseIntPipe } from '@nestjs/common'
 import { UserManagementService } from './user-management.service'
 import { UpdateBlockDto } from './dto/update-block.dto'
 
@@ -46,7 +46,10 @@ async getRegistrationTeam() {
     return this.userService.getUserById(id)
   }
 
-
+  @Post('send-email')
+  async sendEmail(@Body('email') email: string) {
+    return this.userService.sendEmailToAddress(email)
+  }
 
 
   

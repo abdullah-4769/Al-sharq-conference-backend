@@ -3,6 +3,6 @@ import { BrevoService } from './brevo.service';
 
 @Module({
   providers: [BrevoService],
-  exports: [BrevoService] 
+  exports: [BrevoService]
 })
 export class BrevoModule {}

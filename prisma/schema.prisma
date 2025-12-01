@@ -20,6 +20,8 @@ model User {
   organization String?
   photo        String?
   isBlocked    Boolean   @default(false)
+    otp          String?
+  otpExpiry    DateTime?
   speakers  Speaker[]
   eventJoins EventJoin[]
   representatives Representative[]

@@ -26,12 +26,15 @@ import { BrevoModule } from './brevo/brevo.module'
 import { SessionForumModule } from './forum/session-forum/session-forum.module';
 import { AgoraModule } from './agora/agora.module'
 import { CommentsModule } from './forum/comments/comments.module'
+
+
 @Module({
   imports: [AuthModule,
     ProfileModule,
     ProductModule,AgoraModule,
     EventModule,
     ExhibiterosModule,
+
     SponsorModule,
     ExhibitorProductsModule,
     RepresentativeModule,
