@@ -1,4 +1,4 @@
-import { Injectable ,NotFoundException} from '@nestjs/common';
+import { Injectable ,NotFoundException,BadRequestException} from '@nestjs/common';
 import { PrismaService } from '../../lib/prisma/prisma.service';
 import { Prisma, Exhibitor } from '@prisma/client';
 import { SpacesService } from '../../spaces/spaces.service'
@@ -22,14 +22,34 @@ export class ExhibiterosService {
   ) {}
 
 async createExhibitor(data: Prisma.ExhibitorCreateInput): Promise<Exhibitor> {
+  const email = data.email ?? undefined
+
+  const existingUser = await this.prisma.user.findUnique({
+    where: { email }
+  })
+
+  const existingSponsor = await this.prisma.sponsor.findUnique({
+    where: { email }
+  })
+
+  if (existingUser || existingSponsor) {
+    throw new BadRequestException('Email is already in use')
+  }
+
   const hashedPassword = await bcrypt.hash(data.password || '', 10)
+
   return this.prisma.exhibitor.create({
     data: {
       ...data,
-      password: hashedPassword,
-    },
+      email,
+      password: hashedPassword
+    }
   })
 }
+
+
+
+
 
 
   async getAllExhibitors(): Promise<Exhibitor[]> {

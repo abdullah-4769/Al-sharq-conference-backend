@@ -13,7 +13,15 @@ export class SponsorService {
   ) {}
 
 async createSponsor(data: CreateSponsorDto) {
+  const existingUser = await this.prisma.user.findUnique({ where: { email: data.email } })
+  const existingSponsor = await this.prisma.sponsor.findUnique({ where: { email: data.email } })
+
+  if (existingUser || existingSponsor) {
+    throw new BadRequestException('Email is already in use')
+  }
+
   const hashedPassword = await bcrypt.hash(data.password, 10)
+
   return this.prisma.sponsor.create({
     data: {
       ...data,
@@ -21,6 +29,7 @@ async createSponsor(data: CreateSponsorDto) {
     },
   })
 }
+
 
   async getAllSponsors() {
     return this.prisma.sponsor.findMany();

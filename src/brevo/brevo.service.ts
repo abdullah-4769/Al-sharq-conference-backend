@@ -1,50 +1,41 @@
-import { Injectable } from '@nestjs/common';
-import nodemailer from 'nodemailer';
-import { BREVO_SENDER_EMAIL, BREVO_SENDER_NAME } from './brevo.constants';
+import { Injectable } from '@nestjs/common'
+import axios from 'axios'
+import { BREVO_API_KEY, BREVO_SENDER_EMAIL, BREVO_SENDER_NAME } from './brevo.constants'
 
 @Injectable()
 export class BrevoService {
-  private transporter;
-
-  constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: 'smtp-relay.brevo.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: BREVO_SENDER_EMAIL,
-        pass: process.env.BREVO_API_KEY
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
-  }
-
   async sendEmail(to: string, subject: string, htmlContent: string) {
-    return this.transporter.sendMail({
-      from: `"${BREVO_SENDER_NAME}" <${BREVO_SENDER_EMAIL}>`,
-      to,
+    const data = {
+      sender: { name: BREVO_SENDER_NAME, email: BREVO_SENDER_EMAIL },
+      to: [{ email: to }],
       subject,
-      html: htmlContent
-    });
+      htmlContent
+    }
+
+    const response = await axios.post('https://api.brevo.com/v3/smtp/email', data, {
+      headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' }
+    })
+
+    return response.data
   }
 
   async sendOtp(to: string, otp: string) {
-    const subject = 'Your OTP Code';
-    const html = `<p>Your OTP is <strong>${otp}</strong></p>`;
-    return this.sendEmail(to, subject, html);
+    const htmlContent = `<p>Your OTP is <strong>${otp}</strong></p>`
+    return this.sendEmail(to, 'Your OTP Code', htmlContent)
   }
 
-  async sendNotification(to: string, message: string) {
-    const subject = 'Notification';
-    const html = `<p>${message}</p>`;
-    return this.sendEmail(to, subject, html);
-  }
+  async sendTemplateEmail(to: string, templateId: number, params: Record<string, any>) {
+    const data = {
+      to: [{ email: to }],
+      templateId,
+      params,
+      sender: { name: BREVO_SENDER_NAME, email: BREVO_SENDER_EMAIL }
+    }
 
-  async sendInvitation(to: string, event: string, date: string) {
-    const subject = 'You are Invited';
-    const html = `<p>You are invited to <strong>${event}</strong> on <strong>${date}</strong>.</p>`;
-    return this.sendEmail(to, subject, html);
+    const response = await axios.post('https://api.brevo.com/v3/smtp/email', data, {
+      headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' }
+    })
+
+    return response.data
   }
 }

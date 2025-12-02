@@ -76,6 +76,8 @@ model Sponsor {
   twitter         String?
   youtube         String?
   password        String?
+   otp       String?  
+  otpExpiry DateTime?
   role            String           @default("sponsor") 
   products        Product[]         // no onDelete here
   representatives Representative[]  // no onDelete here
@@ -117,7 +119,9 @@ model Exhibitor {
   linkedin        String?
   twitter         String?
   youtube         String?
-  password        String?          // new password field
+  password        String? 
+   otp       String?  
+  otpExpiry DateTime?         // new password field
   role            String           @default("exhibitor")
   products        ExhibitorProduct[]
   representatives ExhibitorRepresentative[]

@@ -11,12 +11,16 @@ import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto'
 import { SpacesService } from '../spaces/spaces.service'
 import { randomInt } from 'crypto';
+import { BrevoService } from '../brevo/brevo.service'
+
+
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private spacesService: SpacesService,
+    private readonly brevoService: BrevoService
   ) { }
 
   async register(
@@ -53,7 +57,11 @@ export class AuthService {
         file: filePath,
       },
     })
-
+  await this.brevoService.sendTemplateEmail(
+    user.email,
+    269, // your template ID
+    { name: user.name }
+  )
     const token = this.jwt.sign({
       id: user.id,
       email: user.email,
@@ -249,46 +257,104 @@ async updateProfile(userId: number, data: UpdateProfileDto, file?: Express.Multe
 
 
 async sendOtp(email: string) {
-  const user = await this.prisma.user.findUnique({ where: { email } })
-  if (!user) throw new NotFoundException('User not found')
+  let account: any
+  let accountType: 'user' | 'exhibitor' | 'sponsor' | null = null
+
+  account = await this.prisma.user.findUnique({ where: { email } })
+  if (account) accountType = 'user'
+
+  if (!account) {
+    account = await this.prisma.exhibitor.findUnique({ where: { email } })
+    if (account) accountType = 'exhibitor'
+  }
+
+  if (!account) {
+    account = await this.prisma.sponsor.findUnique({ where: { email } })
+    if (account) accountType = 'sponsor'
+  }
+
+  if (!account) throw new NotFoundException('Account not found')
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString()
   const expiry = new Date()
   expiry.setMinutes(expiry.getMinutes() + 10)
 
-  await this.prisma.user.update({
-    where: { email },
-    data: { otp, otpExpiry: expiry },
-  })
+  if (accountType === 'user') {
+    await this.prisma.user.update({
+      where: { email },
+      data: { otp, otpExpiry: expiry },
+    })
+  } else if (accountType === 'exhibitor') {
+    await this.prisma.exhibitor.update({
+      where: { email },
+      data: { otp, otpExpiry: expiry },
+    })
+  } else if (accountType === 'sponsor') {
+    await this.prisma.sponsor.update({
+      where: { email },
+      data: { otp, otpExpiry: expiry },
+    })
+  }
+
+  await this.brevoService.sendOtp(email, otp)
 
   return {
-    message: 'OTP generated successfully',
-    otp, 
+    message: 'OTP sent successfully via email',
     user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      // include other non-sensitive fields you want
+      id: account.id,
+      name: account.name,
+      email: account.email,
+      role: account.role,
     }
   }
 }
 
 
 
+
+
 async verifyOtp(email: string, otp: string) {
-  const user = await this.prisma.user.findUnique({ where: { email } });
-  if (!user) throw new NotFoundException('User not found');
+  let account: any
+  let accountType: 'user' | 'exhibitor' | 'sponsor' | null = null
 
-  if (user.otp !== otp) throw new BadRequestException('Invalid OTP');
-  if (!user.otpExpiry || user.otpExpiry < new Date()) throw new BadRequestException('OTP expired');
+  account = await this.prisma.user.findUnique({ where: { email } })
+  if (account) accountType = 'user'
 
-  await this.prisma.user.update({
-    where: { email },
-    data: { otp: null, otpExpiry: null },
-  });
+  if (!account) {
+    account = await this.prisma.exhibitor.findUnique({ where: { email } })
+    if (account) accountType = 'exhibitor'
+  }
 
-  return { message: 'OTP verified successfully' };
+  if (!account) {
+    account = await this.prisma.sponsor.findUnique({ where: { email } })
+    if (account) accountType = 'sponsor'
+  }
+
+  if (!account) throw new NotFoundException('Account not found')
+
+  if (account.otp !== otp) throw new BadRequestException('Invalid OTP')
+  if (!account.otpExpiry || account.otpExpiry < new Date()) throw new BadRequestException('OTP expired')
+
+  if (accountType === 'user') {
+    await this.prisma.user.update({
+      where: { email },
+      data: { otp: null, otpExpiry: null },
+    })
+  } else if (accountType === 'exhibitor') {
+    await this.prisma.exhibitor.update({
+      where: { email },
+      data: { otp: null, otpExpiry: null },
+    })
+  } else if (accountType === 'sponsor') {
+    await this.prisma.sponsor.update({
+      where: { email },
+      data: { otp: null, otpExpiry: null },
+    })
+  }
+
+  return { message: 'OTP verified successfully' }
 }
+
 
 
 }

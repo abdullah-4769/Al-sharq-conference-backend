@@ -6,6 +6,8 @@ import { PrismaService } from 'src/lib/prisma/prisma.service';
 import { JwtService } from 'src/lib/jwt/jwt.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { SpacesModule } from '../spaces/spaces.module'
+import { BrevoService } from '../brevo/brevo.service'
+
 
 @Module({
   imports: [
@@ -15,6 +17,6 @@ import { SpacesModule } from '../spaces/spaces.module'
     }),SpacesModule
   ],
   controllers: [AuthController],
-  providers: [AuthService, PrismaService, JwtService, JwtStrategy],
+  providers: [AuthService, PrismaService, JwtService, JwtStrategy,BrevoService],
 })
 export class AuthModule {}

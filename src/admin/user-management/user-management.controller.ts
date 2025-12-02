@@ -51,6 +51,10 @@ async getRegistrationTeam() {
     return this.userService.sendEmailToAddress(email)
   }
 
+@Post('send-bulk-email')
+async sendBulkEmail(@Body('participants') participants: { email: string; name: string }[]) {
+  return this.userService.sendBulkEmail(participants)
+}
 
   
 }

@@ -195,4 +195,31 @@ async getRegistrationTeam() {
     return this.brevoService.sendEmail(email, subject, htmlContent)
   }
 
+
+async sendBulkEmail(participants: { email: string; name: string }[]) {
+  if (!participants || participants.length === 0) {
+    throw new NotFoundException('No participants provided')
+  }
+
+  const results: { email: string; status: string; error?: string }[] = []
+
+  for (const participant of participants) {
+    try {
+      await this.brevoService.sendTemplateEmail(
+        participant.email,
+        269, // Brevo template ID
+        { name: participant.name } // Dynamic fields in template
+      )
+      results.push({ email: participant.email, status: 'sent' })
+    } catch (error: any) {
+      results.push({ email: participant.email, status: 'failed', error: error.message })
+    }
+  }
+
+  return results
+}
+
+
+  
+
 }
