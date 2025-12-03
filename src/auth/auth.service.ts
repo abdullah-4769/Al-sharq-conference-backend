@@ -57,11 +57,7 @@ export class AuthService {
         file: filePath,
       },
     })
-  await this.brevoService.sendTemplateEmail(
-    user.email,
-    269, // your template ID
-    { name: user.name }
-  )
+
     const token = this.jwt.sign({
       id: user.id,
       email: user.email,
@@ -354,6 +350,27 @@ async verifyOtp(email: string, otp: string) {
 
   return { message: 'OTP verified successfully' }
 }
+
+async completeSignup(userId: number, password: string) {
+  const user = await this.prisma.user.findUnique({ where: { id: userId } })
+  if (!user) throw new NotFoundException('User not found')
+
+  const hashed = await bcrypt.hash(password, 10)
+
+  const updated = await this.prisma.user.update({
+    where: { id: userId },
+    data: { password: hashed }
+  })
+
+  await this.brevoService.sendTemplateEmail(
+    user.email,
+    269, // your template ID
+    { name: user.name }
+  )
+
+  return { message: 'Signup completed' }
+}
+
 
 
 

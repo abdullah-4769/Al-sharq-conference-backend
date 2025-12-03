@@ -77,6 +77,13 @@ async verifyOtp(@Body() body: { email: string, otp: string }) {
   return this.authService.verifyOtp(body.email, body.otp);
 }
 
+@Patch('complete-signup/:id')
+async completeSignup(
+  @Param('id') id: string,
+  @Body('password') password: string
+) {
+  return this.authService.completeSignup(Number(id), password)
+}
 
 
 }
