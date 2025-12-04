@@ -26,19 +26,33 @@ export class AnnouncementService {
     return announcement
   }
 
-  async update(id: number, dto: UpdateAnnouncementDto) {
-    const announcement = await this.prisma.announcement.findUnique({ where: { id } })
-    if (!announcement) throw new NotFoundException('Announcement not found')
-    if (announcement.isSent) throw new BadRequestException('Announcement already sent and cannot be updated')
+async update(id: number, dto: UpdateAnnouncementDto) {
+  const announcement = await this.prisma.announcement.findUnique({ where: { id } })
+  if (!announcement) throw new NotFoundException('Announcement not found')
 
-    const updated = await this.prisma.announcement.update({ where: { id }, data: dto })
+  if (announcement.isSent) throw new BadRequestException('Announcement already sent and cannot be updated')
 
-    if (dto.sendNow && !updated.isSent) {
-      await this.sendAnnouncement(id)
-    }
-
-    return updated
+  // Prepare update data without sendNow
+  const updateData: any = {
+    title: dto.title,
+    message: dto.message,
+    roles: dto.roles,
+    scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
   }
+
+  const updated = await this.prisma.announcement.update({
+    where: { id },
+    data: updateData
+  })
+
+  // If sendNow is true, send announcement immediately
+  if (dto.sendNow) {
+    await this.sendAnnouncement(updated.id)
+  }
+
+  return updated
+}
+
 
   async sendAnnouncement(id: number) {
     const announcement = await this.prisma.announcement.findUnique({ where: { id } })
