@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule'
+import { AnnouncementModule } from './announcement/announcement.module'
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -48,7 +50,8 @@ import { CommentsModule } from './forum/comments/comments.module'
     EventRegistrationModule,
     ParticipantDirectoryModule,
     ConnectionModule,
-    ChatModule,
+    ChatModule, ScheduleModule.forRoot(), // Enables cron jobs
+    AnnouncementModule,
     ParticipantsSessionModule,
     UserManagementModule,
     SpacesModule,BrevoModule,

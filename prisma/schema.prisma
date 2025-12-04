@@ -279,10 +279,11 @@ model ParticipantDirectory {
 
 model ConnectionRequest {
   id          Int      @id @default(autoincrement())
-  sender      User     @relation("SentRequests", fields: [senderId], references: [id])
-  senderId    Int
-  receiver    User     @relation("ReceivedRequests", fields: [receiverId], references: [id])
-  receiverId  Int
+sender      User     @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+senderId    Int
+receiver    User     @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+receiverId  Int
+
   status      ConnectionStatus @default(PENDING)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -301,10 +302,11 @@ enum ConnectionStatus {
 
 model ChatMessage {
   id          Int      @id @default(autoincrement())
-  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
-  senderId    Int
-  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  receiverId  Int
+sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+senderId    Int
+receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+receiverId  Int
+
   content     String
   createdAt   DateTime @default(now())
 
@@ -380,4 +382,16 @@ model ForumComment {
   replies        ForumComment[] @relation("CommentReplies")
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+}
+
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  title     String
+  message   String
+  roles     String[]    // Array of roles to send: ['participant','speaker']
+  scheduledAt DateTime? // Optional schedule time
+  isSent    Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 }
