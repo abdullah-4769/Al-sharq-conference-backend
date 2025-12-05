@@ -56,7 +56,7 @@ model Event {
   updatedAt    DateTime   @updatedAt
   registrations EventRegistration[]
   eventJoins   EventJoin[]
-
+  registrationOpen Boolean              @default(true)
   sessionRegistrations SessionRegistration[]
   participantDirectories ParticipantDirectory[]
   sponsors    Sponsor[]   @relation("EventSponsors")
@@ -394,4 +394,15 @@ model Announcement {
   isSent    Boolean     @default(false)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+}
+
+model OpenEventRegistration {
+  id            Int      @id @default(autoincrement())
+  eventId       Int
+  userId        Int
+  isRegistered  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([eventId, userId])
 }

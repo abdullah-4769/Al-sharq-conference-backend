@@ -6,6 +6,7 @@ export class CreateEventDto {
   mapstatus?: boolean
     startTime?: Date
   endTime?: Date
+  registrationOpen?: boolean
   sponsors?: { id: number }[]
   exhibitors?: { id: number }[]
 }

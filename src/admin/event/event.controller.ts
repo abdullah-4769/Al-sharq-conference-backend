@@ -66,4 +66,29 @@ async getEventSessions(@Param('eventId', ParseIntPipe) eventId: number) {
     return this.eventService.getEventSummary()
   }
 
+
+@Post('toggle-registration')
+toggleRegistration(@Body() body) {
+  return this.eventService.toggleRegistration(body.eventId, body.userId)
+}
+
+@Get('registration-status/:eventId/:userId')
+registrationStatus(
+  @Param('eventId', ParseIntPipe) eventId: number,
+  @Param('userId', ParseIntPipe) userId: number
+) {
+  return this.eventService.registrationStatus(eventId, userId)
+}
+
+@Get('check-first-registration/:eventId/:userId')
+checkFirstRegistration(
+  @Param('eventId', ParseIntPipe) eventId: number,
+  @Param('userId', ParseIntPipe) userId: number
+) {
+  return this.eventService.checkFirstRegistration(eventId, userId)
+}
+
+
+
+
 }

@@ -318,14 +318,14 @@ async joinSession(userId: number, sessionId: number) {
       where: { userId, sessionId },
     })
     if (!registration) {
-      throw new BadRequestException('User not registered for this session')
+      throw new BadRequestException('Participant not registered for this session')
     }
   } else {
     const existingRegistration = await this.prisma.sessionRegistration.findFirst({
       where: { sessionId, userId },
     })
     if (existingRegistration) {
-      throw new BadRequestException('User cannot join directly, registration exists')
+      throw new BadRequestException('Participant cannot join directly, registration Required')
     }
   }
 
@@ -333,14 +333,14 @@ async joinSession(userId: number, sessionId: number) {
     where: { sessionId_userId: { sessionId, userId } },
   })
   if (existingJoin) {
-    return { message: 'User already joined this session' }
+    return { message: 'Participant already joined the session' }
   }
 
   await this.prisma.sessionJoin.create({
     data: { sessionId, userId },
   })
 
-  return { message: 'User successfully joined the session' }
+  return { message: 'Participant successfully joined the session' }
 }
 
 

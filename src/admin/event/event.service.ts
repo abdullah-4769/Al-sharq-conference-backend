@@ -33,6 +33,7 @@ async create(createEventDto: CreateEventDto) {
       location: createEventDto.location,
       googleMapLink: createEventDto.googleMapLink,
       mapstatus: createEventDto.mapstatus ?? false,
+      registrationOpen: createEventDto.registrationOpen ?? false,
       sponsors: { connect: sponsorConnect },
       exhibitors: { connect: exhibitorConnect },
     },
@@ -88,6 +89,7 @@ async update(id: number, updateEventDto: UpdateEventDto) {
     description: updateEventDto.description,
     location: updateEventDto.location,
     googleMapLink: updateEventDto.googleMapLink,
+    registrationOpen: updateEventDto.registrationOpen ?? false,
     startTime: updateEventDto.startTime,
     endTime: updateEventDto.endTime,
     mapstatus:
@@ -329,7 +331,66 @@ async getEventSummary() {
 }
 
 
+async toggleRegistration(eventId: number, userId: number) {
+  const record = await this.prisma.openEventRegistration.findUnique({
+    where: { eventId_userId: { eventId, userId } }
+  })
 
+  if (!record) {
+    return this.prisma.openEventRegistration.create({
+      data: { eventId, userId, isRegistered: true }
+    })
+  }
+
+  return this.prisma.openEventRegistration.update({
+    where: { eventId_userId: { eventId, userId } },
+    data: { isRegistered: !record.isRegistered }
+  })
+}
+async registrationStatus(eventId: number, userId: number) {
+  const record = await this.prisma.openEventRegistration.findUnique({
+    where: { eventId_userId: { eventId, userId } }
+  })
+
+  if (!record) {
+    return { isRegistered: false }
+  }
+
+  return { isRegistered: record.isRegistered }
+}
+
+async checkFirstRegistration(eventId: number, userId: number) {
+  const event = await this.prisma.event.findUnique({
+    where: { id: eventId },
+    select: { registrationOpen: true }
+  })
+
+  if (!event) {
+    return { message: 'Event not found', required: false }
+  }
+
+  if (!event.registrationOpen) {
+    return { message: 'Registration not required', required: false }
+  }
+
+  const record = await this.prisma.openEventRegistration.findUnique({
+    where: { eventId_userId: { eventId, userId } }
+  })
+
+  if (!record) {
+    return {
+      required: true,
+      isRegistered: false,
+      message: 'User is not registered'
+    }
+  }
+
+  return {
+    required: true,
+    isRegistered: record.isRegistered,
+    message: record.isRegistered ? 'User is registered' : 'User is not registered'
+  }
+}
 
 
 }
