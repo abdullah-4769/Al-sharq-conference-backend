@@ -8,31 +8,29 @@ import { UpdateAnnouncementDto } from './dto/update-announcement.dto'
 export class AnnouncementService {
   constructor(private prisma: PrismaService, private brevoService: BrevoService) {}
 
-  async create(dto: CreateAnnouncementDto) {
-    const announcement = await this.prisma.announcement.create({
-      data: {
-        title: dto.title,
-        message: dto.message,
-        roles: dto.roles,
-        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
-        isSent: false,
-      },
-    })
+async create(dto: CreateAnnouncementDto) {
+  const announcement = await this.prisma.announcement.create({
+    data: {
+      title: dto.title,
+      message: dto.message,
+      roles: dto.roles,
+      scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
+      isSent: false,
+    },
+  })
 
-    if (dto.sendNow && !dto.scheduledAt) {
-      await this.sendAnnouncement(announcement.id)
-    }
-
-    return announcement
+  if (dto.sendNow) {
+    await this.sendAnnouncement(announcement.id)
   }
+
+  return announcement
+}
 
 async update(id: number, dto: UpdateAnnouncementDto) {
   const announcement = await this.prisma.announcement.findUnique({ where: { id } })
   if (!announcement) throw new NotFoundException('Announcement not found')
+  if (announcement.isSent) throw new BadRequestException('Announcement already sent')
 
-  if (announcement.isSent) throw new BadRequestException('Announcement already sent and cannot be updated')
-
-  // Prepare update data without sendNow
   const updateData: any = {
     title: dto.title,
     message: dto.message,
@@ -42,10 +40,9 @@ async update(id: number, dto: UpdateAnnouncementDto) {
 
   const updated = await this.prisma.announcement.update({
     where: { id },
-    data: updateData
+    data: updateData,
   })
 
-  // If sendNow is true, send announcement immediately
   if (dto.sendNow) {
     await this.sendAnnouncement(updated.id)
   }
@@ -53,31 +50,31 @@ async update(id: number, dto: UpdateAnnouncementDto) {
   return updated
 }
 
+async sendAnnouncement(id: number) {
+  const announcement = await this.prisma.announcement.findUnique({ where: { id } })
+  if (!announcement) throw new NotFoundException('Announcement not found')
+  if (announcement.isSent) throw new BadRequestException('Announcement already sent')
 
-  async sendAnnouncement(id: number) {
-    const announcement = await this.prisma.announcement.findUnique({ where: { id } })
-    if (!announcement) throw new NotFoundException('Announcement not found')
-    if (announcement.isSent) throw new BadRequestException('Announcement already sent')
-
-    let users;
-    if (announcement.roles.includes('all')) {
-      users = await this.prisma.user.findMany()
-    } else {
-      users = await this.prisma.user.findMany({ where: { role: { in: announcement.roles } } })
-    }
-
-    for (const user of users) {
-      try {
-        await this.brevoService.sendEmail(user.email, announcement.title, announcement.message)
-      } catch (err: any) {
-        console.error(`Failed to send to ${user.email}: ${err.message}`)
-      }
-    }
-
-    await this.prisma.announcement.update({ where: { id }, data: { isSent: true } })
-
-    return { sentTo: users.length }
+  let users
+  if (announcement.roles.includes('all')) {
+    users = await this.prisma.user.findMany()
+  } else {
+    users = await this.prisma.user.findMany({ where: { role: { in: announcement.roles } } })
   }
+
+  for (const user of users) {
+    try {
+      await this.brevoService.sendEmail(user.email, announcement.title, announcement.message)
+    } catch (err: any) {
+      console.error(`Failed to send to ${user.email}: ${err.message}`)
+    }
+  }
+
+  await this.prisma.announcement.update({ where: { id }, data: { isSent: true } })
+
+  return { sentTo: users.length }
+}
+
 
   async getAll() {
     return this.prisma.announcement.findMany({ orderBy: { createdAt: 'desc' } })
