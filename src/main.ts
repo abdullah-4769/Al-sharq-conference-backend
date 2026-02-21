@@ -6,18 +6,25 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-app.enableCors({
-  origin: ['http://localhost:3000', 'http://192.168.24.103:3000'],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  credentials: true,
-})
-
+  app.enableCors({
+    origin: [
+      'http://localhost:3000',
+      'http://192.168.24.103:3000',
+      'https://ai-sharq-frontend.vercel.app'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    credentials: true,
+  });
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
 
-  await app.listen(5000);
+  const server = await app.listen(5000);
+
+  server.setTimeout(300000);
+  server.keepAliveTimeout = 300000;
+
   console.log(`Server is running on http://localhost:5000`);
 }
 
